@@ -31,15 +31,19 @@ public class WeatherServiceImpl implements Weatherservice {
         String RawMETAR = parseRawMETARText(apiResponseJSON);
         HashMap<String, Object> SeperatedComponents = separateMetarComponents(apiResponseJSON);
         String FLightRules = getFlightConditions(SeperatedComponents);
-
-        return new AirportWeatherResponse(
-                RawMETAR,
-                SeperatedComponents,
-                FLightRules
-        );
-    }
-
-
+        
+        
+        
+                return new AirportWeatherResponse(
+                        RawMETAR,
+                        SeperatedComponents,
+                        FLightRules
+                );
+            }
+        
+        
+        
+        
     @Override
     public String parseRawMETARText(String apiResponse) {
         return new JSONObject(apiResponse)
@@ -48,6 +52,7 @@ public class WeatherServiceImpl implements Weatherservice {
                 .getString("raw_text");
     }
 
+   
     @Override
     public HashMap<String, Object> separateMetarComponents(String info) {
         JSONObject result = new JSONObject(info)
@@ -64,9 +69,14 @@ public class WeatherServiceImpl implements Weatherservice {
         addComponentIfPresent(result, "dewpoint", metarComponents, this::parseDewpoint);
         addComponentIfPresent(result, "barometer", metarComponents, this::parsePressure);
         addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
+        addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
+
+        metarComponents.put("density_altitude", computeDensityAltitude(metarComponents));
+        
 
         return metarComponents;
     }
+
     @Override
     public String getFlightConditions(HashMap<String, Object> WeatherComponents) {
 
@@ -81,11 +91,50 @@ public class WeatherServiceImpl implements Weatherservice {
         *
         * */
 
-        System.out.println(WeatherComponents.get("clouds"));
+        System.out.println(WeatherComponents.get("temperature"));
         System.out.println(WeatherComponents.get("visibility"));
 
 
         return "test";
+    }
+
+    public static double calculateStandardTemperature(int altitude) {
+        // Standard temperature at sea level is 15°C
+        final double SEA_LEVEL_STANDARD_TEMP = 15.0;
+
+        // Temperature decreases by 2°C per 1000 feet
+        final double TEMP_DECREASE_RATE = 2.0;
+
+        // Calculate the standard temperature at the given altitude
+        double standardTemperature = SEA_LEVEL_STANDARD_TEMP - (altitude / 1000.0) * TEMP_DECREASE_RATE;
+
+        return standardTemperature;
+    }
+
+    private int computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
+
+        /*this funciton should compute the density alttude for an airport at a given pressure altitude
+         * 
+         * 
+         * An API call to extract the proper data for presssure altitude at an airport so for now just use 3000 feet
+         * 
+         * the needed airport elevation can be found here
+         * 
+         * https://www.checkwxapi.com/documentation/station
+         * 
+         * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper function to compute this. 
+         * 
+         * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
+         */
+
+         System.out.println("ALT" + WeatherComponents.get("elevation"));
+         System.out.println(WeatherComponents.get("temperature"));
+
+         
+
+         
+
+        return 0;
     }
 
 
@@ -170,5 +219,11 @@ public class WeatherServiceImpl implements Weatherservice {
     private String parseHumidity(Object humidityDataObj) {
         JSONObject humidityData = (JSONObject) humidityDataObj;
         return humidityData.optString("percent") + " %";
+    }
+    private String parseElevation(Object ElevationDataObj){
+
+        JSONObject elevationData = (JSONObject) ElevationDataObj;
+
+        return elevationData.optString("feet");
     }
 }
