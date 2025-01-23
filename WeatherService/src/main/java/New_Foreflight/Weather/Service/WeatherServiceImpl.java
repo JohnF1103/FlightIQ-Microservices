@@ -127,14 +127,21 @@ public class WeatherServiceImpl implements Weatherservice {
          * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
-         System.out.println("ALT" + WeatherComponents.get("elevation"));
-         System.out.println(WeatherComponents.get("temperature"));
+        System.out.println("ALT" + WeatherComponents.get("elevation"));
+        System.out.println(WeatherComponents.get("temperature"));
 
-         
+        int pressureAltitude = 3000; // will change when we use API calls for data
 
-         
+        // calculate ISA (standard temperature at a given altitute)
+        double standardTemperature = calculateStandardTemperature(pressureAltitude);
 
-        return 0;
+        // calculate OAT (outside air temperature)
+        double outsideAirTemp = (double) WeatherComponents.get("temperature");
+
+        // calculate the DA
+        int densityAltitude = pressureAltitude + (120 * (outsideAirTemp - standardTemperature));
+
+        return densityAltitude;
     }
 
 
