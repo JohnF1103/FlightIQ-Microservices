@@ -28,9 +28,9 @@ public class WeatherServiceImpl implements Weatherservice {
         String apiResponseJSON = restTemplate.getForObject(endpoint, String.class);
 
 
-        String RawMETAR = parseRawMETARText(apiResponseJSON);
+        String RawMETAR = parseRawMETARText(apiResponseJSON); 
         HashMap<String, Object> SeperatedComponents = separateMetarComponents(apiResponseJSON);
-        String FLightRules = getFlightConditions(SeperatedComponents);
+        String FLightRules = getFlightConditions(apiResponseJSON);
         
         
         
@@ -78,7 +78,7 @@ public class WeatherServiceImpl implements Weatherservice {
     }
 
     @Override
-    public String getFlightConditions(HashMap<String, Object> WeatherComponents) {
+    public String getFlightConditions(String apiResponseJSON) {
 
         /*
         * VFR conditions are defined as visibility greater than 5 statute miles and a cloud ceiling above 3,000 feet.
@@ -87,15 +87,16 @@ public class WeatherServiceImpl implements Weatherservice {
         *
         * IFR conditions are for visibility less than or equal to 3 statute miles or a cloud ceiling at or below 1,000 feet.
         *
-        * Complete this function to determine the flight rules for the given weather. return the result as a string E.G VFR, IFR, MVFR
+        * Returns the flight conditions from the API response as a string
         *
         * */
-
-        System.out.println(WeatherComponents.get("temperature"));
-        System.out.println(WeatherComponents.get("visibility"));
-
-
-        return "test";
+    	
+    	String flightConditions =  new JSONObject(apiResponseJSON).getJSONArray("data")
+        		.getJSONObject(0)
+        		.getString("flight_category")
+        		.toString();
+    	
+    	return flightConditions;
     }
 
     public static double calculateStandardTemperature(int altitude) {
@@ -129,9 +130,6 @@ public class WeatherServiceImpl implements Weatherservice {
 
          System.out.println("ALT" + WeatherComponents.get("elevation"));
          System.out.println(WeatherComponents.get("temperature"));
-
-         
-
          
 
         return 0;
