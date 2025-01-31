@@ -71,7 +71,7 @@ public class WeatherServiceImpl implements Weatherservice {
         addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
         addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
 
-        metarComponents.put("blajadjfsdlkfjaskl", computeDensityAltitude(metarComponents));
+        metarComponents.put("density_altitude", computeDensityAltitude(metarComponents));
         
 
         return metarComponents;
