@@ -4,11 +4,6 @@ import java.util.HashMap;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AirportWeatherResponse {
     
@@ -27,7 +22,5 @@ public class AirportWeatherResponse {
         this.METARcomponents = metarcomponents;
         this.flightRules = flightRules;
     }
-
-    // Getters and setters
 }
 
