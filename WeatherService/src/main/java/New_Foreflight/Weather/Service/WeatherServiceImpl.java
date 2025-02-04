@@ -139,9 +139,9 @@ public class WeatherServiceImpl implements Weatherservice {
         double outsideAirTemp = (double) WeatherComponents.get("temperature");
 
         // calculate the DA
-        int densityAltitude = pressureAltitude + (120 * (outsideAirTemp - standardTemperature));
+        double densityAltitude = pressureAltitude + (120 * (outsideAirTemp - standardTemperature));
 
-        return densityAltitude;
+        return (int) densityAltitude;
     }
 
 
