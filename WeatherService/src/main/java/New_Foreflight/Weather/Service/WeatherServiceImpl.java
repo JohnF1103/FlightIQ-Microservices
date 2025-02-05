@@ -71,11 +71,7 @@ public class WeatherServiceImpl implements Weatherservice {
         addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
         addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
 
-<<<<<<< HEAD
         metarComponents.put("density altitude", computeDensityAltitude(metarComponents));
-=======
-        metarComponents.put("blajadjfsdlkfjaskl", computeDensityAltitude(metarComponents));
->>>>>>> 3e8e28868b7fbd3b4c976f362514e7cc70cec15f
         
 
         return metarComponents;
@@ -129,32 +125,18 @@ public class WeatherServiceImpl implements Weatherservice {
          * 
          * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper function to compute this. 
          * 
-         * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
+         * implement the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
-<<<<<<< HEAD
-        System.out.println("ALT" + WeatherComponents.get("elevation").toString());
-        System.out.println(WeatherComponents.get("temperature").toString());
+        double ALT = Double.parseDouble(WeatherComponents.get("elevation").toString());
 
-        int pressureAltitude = 3000; // will change when we use API calls for data
-
-        // calculate ISA (standard temperature at a given altitute)
-        double standardTemperature = calculateStandardTemperature(pressureAltitude);
-=======
-         System.out.println("ALT" + WeatherComponents.get("elevation"));
-         System.out.println(WeatherComponents.get("temperature"));
-         
->>>>>>> 3e8e28868b7fbd3b4c976f362514e7cc70cec15f
-
-        System.out.println(WeatherComponents.get("temperature").getClass()); 
-
-        // calculate OAT (outside air temperature)
-        double outsideAirTemp = Double.parseDouble(WeatherComponents.get("temperature").toString());
-
-        // calculate the DA
-        double densityAltitude = pressureAltitude + (120 * (outsideAirTemp - standardTemperature));
-
-        return (double) 2.5;
+        double degF = Double.parseDouble(WeatherComponents.get("temperature").toString().split(" ")[0]);
+  
+        double degC = (degF - 32) / 1.8;
+  
+        double ISA = calculateStandardTemperature((int) ALT);
+  
+        return ALT + (120 * (degC - ISA));
     }
 
 
