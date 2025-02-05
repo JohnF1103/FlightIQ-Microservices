@@ -111,7 +111,7 @@ public class WeatherServiceImpl implements Weatherservice {
         return standardTemperature;
     }
 
-    private int computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
+    private double computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
 
         /*this funciton should compute the density alttude for an airport at a given pressure altitude
          * 
@@ -127,21 +127,23 @@ public class WeatherServiceImpl implements Weatherservice {
          * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
-        System.out.println("ALT" + WeatherComponents.get("elevation"));
-        System.out.println(WeatherComponents.get("temperature"));
+        System.out.println("ALT" + WeatherComponents.get("elevation").toString());
+        System.out.println(WeatherComponents.get("temperature").toString());
 
         int pressureAltitude = 3000; // will change when we use API calls for data
 
         // calculate ISA (standard temperature at a given altitute)
         double standardTemperature = calculateStandardTemperature(pressureAltitude);
 
+        System.out.println(WeatherComponents.get("temperature").getClass()); 
+
         // calculate OAT (outside air temperature)
-        double outsideAirTemp = (double) WeatherComponents.get("temperature");
+        double outsideAirTemp = Double.parseDouble(WeatherComponents.get("temperature").toString());
 
         // calculate the DA
         double densityAltitude = pressureAltitude + (120 * (outsideAirTemp - standardTemperature));
 
-        return (int) densityAltitude;
+        return (double) 2.5;
     }
 
 
