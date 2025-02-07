@@ -18,7 +18,7 @@ public class WeatherServiceController {
     @Autowired
     Weatherservice weatherservice;
 
-    @GetMapping(value = "/getAirportInfo")
+    @GetMapping(value = "/getAirportWeather")
     public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
         try {
             AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
