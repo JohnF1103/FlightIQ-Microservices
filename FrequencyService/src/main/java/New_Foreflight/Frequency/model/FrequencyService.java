@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class FrequencyService {
+
+    @Value("${airportdb.api.url}")
+    private String apiUrl;
     
     @Value("${airportdb.api.token}")
     private String apiToken;
@@ -22,11 +25,7 @@ public class FrequencyService {
     private String apiKey;
 
     public HashMap<String, String> getFrequencies(@RequestParam String airportCode) {
-        String url = String.format(
-                "https://airportdb.io/api/v1/airport/%s?apiToken=%s&X-API-Key=%s",
-                airportCode,
-                apiToken,
-                apiKey);
+        String url = apiUrl.replace("{code}", airportCode).replace("{token}", apiToken).replace("{key}", apiKey);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .GET()
