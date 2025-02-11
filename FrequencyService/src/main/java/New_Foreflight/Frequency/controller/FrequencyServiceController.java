@@ -1,7 +1,5 @@
 package New_Foreflight.Frequency.controller;
 
-import java.util.HashMap;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import New_Foreflight.Frequency.model.FrequencyService;
+import New_Foreflight.Frequency.dto.AirportFrequencyResponse;
+import New_Foreflight.Frequency.service.FrequencyService;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -20,7 +19,7 @@ public class FrequencyServiceController {
     private FrequencyService frequencyService;
 
     @GetMapping(value = "/getAirportFrequencies")
-    public ResponseEntity<HashMap<String, String>> getFrequencies(@RequestParam String airportCode) {
+    public ResponseEntity<AirportFrequencyResponse> getAirportFrequencies(@RequestParam String airportCode) {
         try {
             return ResponseEntity.ok(frequencyService.getFrequencies(airportCode));
         } catch (Exception exception) {

@@ -1,4 +1,4 @@
-package New_Foreflight.Frequency.model;
+package New_Foreflight.Frequency.service;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -9,6 +9,9 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import New_Foreflight.Frequency.dto.AirportFrequencyResponse;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +27,7 @@ public class FrequencyService {
     @Value("${airportdb.api.key}")
     private String apiKey;
 
-    public HashMap<String, String> getFrequencies(@RequestParam String airportCode) {
+    public AirportFrequencyResponse getFrequencies(@RequestParam String airportCode) {
         String url = apiUrl.replace("{code}", airportCode).replace("{token}", apiToken).replace("{key}", apiKey);
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
         HttpResponse<String> response = null;
@@ -32,7 +35,7 @@ public class FrequencyService {
         try {
             response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-            return parseFrequencies(response.body());
+            return new AirportFrequencyResponse(parseFrequencies(response.body()));
         } catch (Exception exception) {
             exception.printStackTrace();
         }
