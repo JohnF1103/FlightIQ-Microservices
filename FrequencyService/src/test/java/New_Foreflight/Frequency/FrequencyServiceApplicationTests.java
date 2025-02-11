@@ -34,7 +34,7 @@ class FrequencyServiceApplicationTests {
         }
     }
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 }

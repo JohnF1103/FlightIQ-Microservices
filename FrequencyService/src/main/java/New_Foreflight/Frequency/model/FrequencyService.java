@@ -17,7 +17,7 @@ public class FrequencyService {
 
     @Value("${airportdb.api.url}")
     private String apiUrl;
-    
+
     @Value("${airportdb.api.token}")
     private String apiToken;
 
@@ -26,12 +26,9 @@ public class FrequencyService {
 
     public HashMap<String, String> getFrequencies(@RequestParam String airportCode) {
         String url = apiUrl.replace("{code}", airportCode).replace("{token}", apiToken).replace("{key}", apiKey);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
         HttpResponse<String> response = null;
-        
+
         try {
             response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -59,7 +56,8 @@ public class FrequencyService {
 
                         if (description == null || description.isEmpty() || frequency_mhz == null
                                 || frequency_mhz.isEmpty()) {
-                            System.out.println("Error parsing JSON at index " + i + " for airport " + json_object.getString("code"));
+                            System.out.println("Error parsing JSON at index " + i + " for airport "
+                                    + json_object.getString("code"));
                             continue;
                         }
 
