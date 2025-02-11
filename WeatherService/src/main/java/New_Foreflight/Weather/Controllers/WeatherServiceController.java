@@ -16,14 +16,13 @@ import New_Foreflight.Weather.Service.Weatherservice;
 public class WeatherServiceController {
 
     @Autowired
-    Weatherservice weatherservice;
+    Weatherservice weatherService;
 
     @GetMapping(value = "/getAirportWeather")
-    public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
+    public ResponseEntity<AirportWeatherResponse> getAirportWeather(@RequestParam String airportCode) {
         try {
-            AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
+            return ResponseEntity.ok(weatherService.getAirportWeather(airportCode));
+        } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
