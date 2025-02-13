@@ -1,33 +1,25 @@
 package New_Foreflight.Weather.DTO;
+
 import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AirportWeatherResponse {
-    
-    @JsonProperty("metar_data") 
+
+    @JsonProperty("metar_data")
     private String metarData;
 
     @JsonProperty("metar_components")
     private HashMap<String, Object> METARcomponents;
-    
+
     @JsonProperty("flight_rules")
     private String flightRules;
 
-    
-    public AirportWeatherResponse(String metarData, HashMap<String,Object> metarcomponents, String flightRules) {
+    public AirportWeatherResponse(String metarData, HashMap<String, Object> metarcomponents, String flightRules) {
         this.metarData = metarData;
         this.METARcomponents = metarcomponents;
         this.flightRules = flightRules;
     }
-
-    // Getters and setters
 }
-
