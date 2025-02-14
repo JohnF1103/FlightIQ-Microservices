@@ -12,14 +12,14 @@ public class AirportWeatherResponse {
     private String metarData;
 
     @JsonProperty("metar_components")
-    private HashMap<String, Object> METARcomponents;
+    private HashMap<String, Object> metarComponents;
 
     @JsonProperty("flight_rules")
     private String flightRules;
 
-    public AirportWeatherResponse(String metarData, HashMap<String, Object> metarcomponents, String flightRules) {
+    public AirportWeatherResponse(String metarData, HashMap<String, Object> metarComponents, String flightRules) {
         this.metarData = metarData;
-        this.METARcomponents = metarcomponents;
+        this.metarComponents = metarComponents;
         this.flightRules = flightRules;
     }
 }

@@ -27,7 +27,7 @@ public class WeatherServiceImpl implements WeatherService {
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
 
-        String rawMetar = parseRawMETARText(apiResponseJson);
+        String rawMetar = parseRawMetarText(apiResponseJson);
         HashMap<String, Object> seperatedComponents = separateMetarComponents(apiResponseJson);
         String flightRules = getFlightConditions(apiResponseJson);
 
@@ -35,7 +35,7 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     @Override
-    public String parseRawMETARText(String apiResponse) {
+    public String parseRawMetarText(String apiResponse) {
         return new JSONObject(apiResponse).getJSONArray("data").getJSONObject(0).getString("raw_text");
     }
 
@@ -61,7 +61,7 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     @Override
-    public String getFlightConditions(String apiResponseJSON) {
+    public String getFlightConditions(String apiResponseJson) {
         /*
          * VFR conditions are defined as visibility greater than 5 statute miles and a cloud ceiling above 3,000 feet.
          *
@@ -75,13 +75,13 @@ public class WeatherServiceImpl implements WeatherService {
          *
          */
 
-        String flightConditions = new JSONObject(apiResponseJSON).getJSONArray("data").getJSONObject(0)
+        String flightConditions = new JSONObject(apiResponseJson).getJSONArray("data").getJSONObject(0)
                 .getString("flight_category").toString();
 
         return flightConditions;
     }
 
-    public static double calculateStandardTemperature(int altitude) {
+    private double calculateStandardTemperature(int altitude) {
         // Standard temperature at sea level is 15°C
         final double SEA_LEVEL_STANDARD_TEMP = 15.0;
         // Temperature decreases by 2°C per 1000 feet
@@ -92,7 +92,7 @@ public class WeatherServiceImpl implements WeatherService {
         return standardTemperature;
     }
 
-    private int computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
+    private int computeDensityAltitude(HashMap<String, Object> weatherComponents) {
         /*
          * this funciton should compute the density alttude for an airport at a given pressure altitude
          * 
@@ -199,8 +199,8 @@ public class WeatherServiceImpl implements WeatherService {
         return humidityData.optString("percent") + " %";
     }
 
-    private String parseElevation(Object ElevationDataObj) {
-        JSONObject elevationData = (JSONObject) ElevationDataObj;
+    private String parseElevation(Object elevationDataObj) {
+        JSONObject elevationData = (JSONObject) elevationDataObj;
 
         return elevationData.optString("feet");
     }

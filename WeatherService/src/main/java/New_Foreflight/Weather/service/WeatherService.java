@@ -6,11 +6,11 @@ import java.util.HashMap;
 
 public interface WeatherService {
 
-    AirportWeatherResponse getAirportWeather(String iaco);
+    public AirportWeatherResponse getAirportWeather(String iaco);
 
-    String parseRawMETARText(String apiResponse);
+    public String parseRawMetarText(String apiResponse);
 
-    HashMap<String, Object> separateMetarComponents(String info);
+    public HashMap<String, Object> separateMetarComponents(String info);
 
-    String getFlightConditions(String apiResponseJSON);
+    public String getFlightConditions(String apiResponseJSON);
 }

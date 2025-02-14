@@ -42,28 +42,27 @@ public class FrequencyService {
         return null;
     }
 
-    private static HashMap<String, String> parseFrequencies(String json_frequencies) {
+    private HashMap<String, String> parseFrequencies(String jsonFrequencies) {
         HashMap<String, String> frequenciesHashMap = new HashMap<>();
 
-        if (json_frequencies != null && !json_frequencies.isEmpty()) {
+        if (jsonFrequencies != null && !jsonFrequencies.isEmpty()) {
             try {
-                JSONObject json_object = new JSONObject(json_frequencies);
+                JSONObject jsonObject = new JSONObject(jsonFrequencies);
 
-                if (json_object.has("freqs")) {
-                    JSONArray freqs_array = json_object.getJSONArray("freqs");
+                if (jsonObject.has("freqs")) {
+                    JSONArray freqsArray = jsonObject.getJSONArray("freqs");
 
-                    for (int i = 0; i < freqs_array.length(); i++) {
-                        JSONObject freq = freqs_array.getJSONObject(i);
+                    for (int i = 0; i < freqsArray.length(); i++) {
+                        JSONObject freq = freqsArray.getJSONObject(i);
                         String description = freq.optString("description", null);
                         String frequency_mhz = freq.optString("frequency_mhz", null);
 
                         if (description == null || description.isEmpty() || frequency_mhz == null
                                 || frequency_mhz.isEmpty()) {
                             System.out.println("Error parsing JSON at index " + i + " for airport "
-                                    + json_object.getString("code"));
+                                    + jsonObject.getString("code"));
                             continue;
                         }
-
                         frequenciesHashMap.put(description, frequency_mhz);
                     }
                 } else {
