@@ -12,8 +12,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import New_Foreflight.Weather.Controllers.WeatherServiceController;
-import New_Foreflight.Weather.DTO.AirportWeatherResponse;
+import New_Foreflight.Weather.controller.WeatherServiceController;
+import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 @SpringBootTest
 class WeatherServiceApplicationTests {
