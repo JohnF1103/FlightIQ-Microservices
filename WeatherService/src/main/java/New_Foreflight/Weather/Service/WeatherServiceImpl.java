@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class WeatherServiceImpl implements Weatherservice {
@@ -20,6 +22,9 @@ public class WeatherServiceImpl implements Weatherservice {
 
     @Value("${checkwx.api.key}")
     private String apiKey;
+
+    @Value("${checkwx.api.url.coordinates}")
+    private String coordinatesApiUrl;
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
@@ -97,6 +102,21 @@ public class WeatherServiceImpl implements Weatherservice {
         		.toString();
     	
     	return flightConditions;
+    }
+
+    // This function returns the wind direction and speed at a given set of coordinates.
+    @Override
+    public String getWindAtCoords(double lat, double lon) {
+        String endpoint = String.format(Locale.US, "https://api.checkwx.com/metar/lat/%.2f/lon/%.2f/decoded?x-api-key=%s", lat,
+                lon, apiKey);
+        RestTemplate restTemplate = new RestTemplate();
+        String apiResponseJSON = restTemplate.getForObject(endpoint, String.class);
+
+        JSONArray dataArray = new JSONObject(apiResponseJSON).getJSONArray("data");
+        JSONObject data = dataArray.getJSONObject(0);
+        JSONObject windData = data.optJSONObject("wind");
+        System.out.println(windData);
+        return parseWinds(windData);
     }
 
     public static double calculateStandardTemperature(int altitude) {

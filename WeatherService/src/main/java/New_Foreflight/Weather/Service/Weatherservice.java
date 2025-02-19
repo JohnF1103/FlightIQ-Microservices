@@ -10,6 +10,7 @@ public interface Weatherservice {
      String parseRawMETARText(String apiResponse);
      HashMap<String, Object> separateMetarComponents(String info);
      String getFlightConditions(String apiResponseJSON);
+     String getWindAtCoords(double lat, double lon);
 }
 
 

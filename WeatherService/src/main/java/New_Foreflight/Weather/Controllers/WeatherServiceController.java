@@ -1,6 +1,9 @@
 package New_Foreflight.Weather.Controllers;
 
 import New_Foreflight.Weather.DTO.AirportWeatherResponse;
+
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +32,17 @@ public class WeatherServiceController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             }
         }
+
+        @GetMapping("/getWindAtCoords")
+        public ResponseEntity <String> getWindAtCoords(
+            @RequestParam double lat,
+            @RequestParam double lon) {
+        try {
+            String windData = weatherservice.getWindAtCoords(lat, lon);
+            return ResponseEntity.ok(windData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 
 }
