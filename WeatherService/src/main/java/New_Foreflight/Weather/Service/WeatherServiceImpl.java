@@ -117,11 +117,11 @@ public class WeatherServiceImpl implements Weatherservice {
         double ALT = Double.parseDouble(WeatherComponents.get("elevation").toString());
 
         double degF = Double.parseDouble(WeatherComponents.get("temperature").toString().split(" ")[0]);
-  
+
         double degC = (degF - 32) / 1.8;
-  
+
         double ISA = calculateStandardTemperature((int) ALT);
-  
+
         return ALT + (120 * (degC - ISA));
     }
 
