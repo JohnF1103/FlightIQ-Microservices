@@ -56,12 +56,7 @@ public class WeatherServiceImpl implements Weatherservice {
         addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
         addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
 
-<<<<<<< HEAD
-        metarComponents.put("density altitude", computeDensityAltitude(metarComponents));
-        
-=======
         metarComponents.put("density_altitude", computeDensityAltitude(metarComponents));
->>>>>>> 4df352ece863fb8ed07ffa0c6231e2c038b65385
 
         return metarComponents;
     }
@@ -119,12 +114,7 @@ public class WeatherServiceImpl implements Weatherservice {
          * implement the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
-<<<<<<< HEAD
         double ALT = Double.parseDouble(WeatherComponents.get("elevation").toString());
-=======
-        System.out.println("ALT" + WeatherComponents.get("elevation"));
-        System.out.println(WeatherComponents.get("temperature"));
->>>>>>> 4df352ece863fb8ed07ffa0c6231e2c038b65385
 
         double degF = Double.parseDouble(WeatherComponents.get("temperature").toString().split(" ")[0]);
   
