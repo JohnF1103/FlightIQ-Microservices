@@ -28,37 +28,21 @@ public class WeatherServiceImpl implements Weatherservice {
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJSON = restTemplate.getForObject(endpoint, String.class);
 
-
-        String RawMETAR = parseRawMETARText(apiResponseJSON); 
+        String RawMETAR = parseRawMETARText(apiResponseJSON);
         HashMap<String, Object> SeperatedComponents = separateMetarComponents(apiResponseJSON);
         String FLightRules = getFlightConditions(apiResponseJSON);
-        
-        
-        
-                return new AirportWeatherResponse(
-                        RawMETAR,
-                        SeperatedComponents,
-                        FLightRules
-                );
-            }
-        
-        
-        
-        
-    @Override
-    public String parseRawMETARText(String apiResponse) {
-        return new JSONObject(apiResponse)
-                .getJSONArray("data")
-                .getJSONObject(0)
-                .getString("raw_text");
+
+        return new AirportWeatherResponse(RawMETAR, SeperatedComponents, FLightRules);
     }
 
-   
+    @Override
+    public String parseRawMETARText(String apiResponse) {
+        return new JSONObject(apiResponse).getJSONArray("data").getJSONObject(0).getString("raw_text");
+    }
+
     @Override
     public HashMap<String, Object> separateMetarComponents(String info) {
-        JSONObject result = new JSONObject(info)
-                .getJSONArray("data")
-                .getJSONObject(0);
+        JSONObject result = new JSONObject(info).getJSONArray("data").getJSONObject(0);
 
         LinkedHashMap<String, Object> metarComponents = new LinkedHashMap<>();
 
@@ -72,8 +56,12 @@ public class WeatherServiceImpl implements Weatherservice {
         addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
         addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
 
+<<<<<<< HEAD
         metarComponents.put("density altitude", computeDensityAltitude(metarComponents));
         
+=======
+        metarComponents.put("density_altitude", computeDensityAltitude(metarComponents));
+>>>>>>> 4df352ece863fb8ed07ffa0c6231e2c038b65385
 
         return metarComponents;
     }
@@ -82,22 +70,22 @@ public class WeatherServiceImpl implements Weatherservice {
     public String getFlightConditions(String apiResponseJSON) {
 
         /*
-        * VFR conditions are defined as visibility greater than 5 statute miles and a cloud ceiling above 3,000 feet.
-        *
-        * MVFR conditions occur when visibility is between 3 and 5 statute miles or the cloud ceiling is between 1,000 and 3,000 feet.
-        *
-        * IFR conditions are for visibility less than or equal to 3 statute miles or a cloud ceiling at or below 1,000 feet.
-        *
-        * Returns the flight conditions from the API response as a string
-        *
-        * */
-    	
-    	String flightConditions =  new JSONObject(apiResponseJSON).getJSONArray("data")
-        		.getJSONObject(0)
-        		.getString("flight_category")
-        		.toString();
-    	
-    	return flightConditions;
+         * VFR conditions are defined as visibility greater than 5 statute miles and a cloud ceiling above 3,000 feet.
+         *
+         * MVFR conditions occur when visibility is between 3 and 5 statute miles or the cloud ceiling is between 1,000
+         * and 3,000 feet.
+         *
+         * IFR conditions are for visibility less than or equal to 3 statute miles or a cloud ceiling at or below 1,000
+         * feet.
+         *
+         * Returns the flight conditions from the API response as a string
+         *
+         */
+
+        String flightConditions = new JSONObject(apiResponseJSON).getJSONArray("data").getJSONObject(0)
+                .getString("flight_category").toString();
+
+        return flightConditions;
     }
 
     public static double calculateStandardTemperature(int altitude) {
@@ -115,7 +103,8 @@ public class WeatherServiceImpl implements Weatherservice {
 
     private double computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
 
-        /*this funciton should compute the density alttude for an airport at a given pressure altitude
+        /*
+         * this funciton should compute the density alttude for an airport at a given pressure altitude
          * 
          * 
          * An API call to extract the proper data for presssure altitude at an airport so for now just use 3000 feet
@@ -124,12 +113,18 @@ public class WeatherServiceImpl implements Weatherservice {
          * 
          * https://www.checkwxapi.com/documentation/station
          * 
-         * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper function to compute this. 
+         * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper
+         * function to compute this.
          * 
          * implement the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
+<<<<<<< HEAD
         double ALT = Double.parseDouble(WeatherComponents.get("elevation").toString());
+=======
+        System.out.println("ALT" + WeatherComponents.get("elevation"));
+        System.out.println(WeatherComponents.get("temperature"));
+>>>>>>> 4df352ece863fb8ed07ffa0c6231e2c038b65385
 
         double degF = Double.parseDouble(WeatherComponents.get("temperature").toString().split(" ")[0]);
   
@@ -140,12 +135,12 @@ public class WeatherServiceImpl implements Weatherservice {
         return ALT + (120 * (degC - ISA));
     }
 
-
     /**
      * Helper method to add a component if it exists in the JSON object.the "handle clouds handle vis etc.
      *
      */
-    private <T> void addComponentIfPresent(JSONObject result, String key, LinkedHashMap<String, Object> map, DataParser<T> parser) {
+    private <T> void addComponentIfPresent(JSONObject result, String key, LinkedHashMap<String, Object> map,
+            DataParser<T> parser) {
         if (result.has(key) && !result.isNull(key)) {
             map.put(key, parser.parse(result.get(key)));
         }
@@ -164,8 +159,7 @@ public class WeatherServiceImpl implements Weatherservice {
         int speedKts = windData.optInt("speed_kts", 0);
         int gustKts = windData.optInt("gust_kts", 0);
 
-        return gustKts > 0
-                ? String.format("%d at %d-%d kts", direction, speedKts, gustKts)
+        return gustKts > 0 ? String.format("%d at %d-%d kts", direction, speedKts, gustKts)
                 : String.format("%d at %d kts", direction, speedKts);
     }
 
@@ -174,12 +168,11 @@ public class WeatherServiceImpl implements Weatherservice {
         return visibilityData.optString("miles") + " SM";
     }
 
-
     /*
-    * parses the clouds obj into a list of cloud ceilings and adds to the metar components.
-    * only displays if sky conditions are not clear.
-    *
-    * */
+     * parses the clouds obj into a list of cloud ceilings and adds to the metar components. only displays if sky
+     * conditions are not clear.
+     *
+     */
     private List<HashMap<String, String>> parseClouds(Object cloudsDataObj) {
         JSONArray cloudsArray = (JSONArray) cloudsDataObj;
         List<HashMap<String, String>> cloudsList = new ArrayList<>();
@@ -202,15 +195,13 @@ public class WeatherServiceImpl implements Weatherservice {
 
     private String parseTemperature(Object temperatureDataObj) {
         JSONObject tempData = (JSONObject) temperatureDataObj;
-        return String.format("%s degrees F, %s degrees C",
-                tempData.optString("fahrenheit"),
+        return String.format("%s degrees F, %s degrees C", tempData.optString("fahrenheit"),
                 tempData.optString("celsius"));
     }
 
     private String parseDewpoint(Object dewpointDataObj) {
         JSONObject dewpointData = (JSONObject) dewpointDataObj;
-        return String.format("%s degrees F, %s degrees C",
-                dewpointData.optString("fahrenheit"),
+        return String.format("%s degrees F, %s degrees C", dewpointData.optString("fahrenheit"),
                 dewpointData.optString("celsius"));
     }
 
@@ -223,7 +214,8 @@ public class WeatherServiceImpl implements Weatherservice {
         JSONObject humidityData = (JSONObject) humidityDataObj;
         return humidityData.optString("percent") + " %";
     }
-    private String parseElevation(Object ElevationDataObj){
+
+    private String parseElevation(Object ElevationDataObj) {
 
         JSONObject elevationData = (JSONObject) ElevationDataObj;
 

@@ -1,3 +1,0 @@
-[submodule "frequency_service"]
-	path = frequency_service
-	url = https://github.com/alittlerocket/freq-backend.git
