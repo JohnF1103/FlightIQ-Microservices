@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -95,7 +96,7 @@ public class WeatherServiceImpl implements Weatherservice {
         return standardTemperature;
     }
 
-    private int computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
+    private double computeDensityAltitude(HashMap<String, Object> WeatherComponents) {
 
         /*
          * this funciton should compute the density alttude for an airport at a given pressure altitude
@@ -110,13 +111,18 @@ public class WeatherServiceImpl implements Weatherservice {
          * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper
          * function to compute this.
          * 
-         * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
+         * implement the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
 
-        System.out.println("ALT" + WeatherComponents.get("elevation"));
-        System.out.println(WeatherComponents.get("temperature"));
+        double ALT = Double.parseDouble(WeatherComponents.get("elevation").toString());
 
-        return 0;
+        double degF = Double.parseDouble(WeatherComponents.get("temperature").toString().split(" ")[0]);
+
+        double degC = (degF - 32) / 1.8;
+
+        double ISA = calculateStandardTemperature((int) ALT);
+
+        return ALT + (120 * (degC - ISA));
     }
 
     /**
