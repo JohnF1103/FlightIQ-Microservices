@@ -81,7 +81,7 @@ public class WeatherServiceImpl implements WeatherService {
         return flightConditions;
     }
 
-    private double calculateStandardTemperature(int altitude) {
+    private double calculateStandardTemperature(double altitude) {
         // Standard temperature at sea level is 15°C
         final double SEA_LEVEL_STANDARD_TEMP = 15.0;
         // Temperature decreases by 2°C per 1000 feet
@@ -92,7 +92,7 @@ public class WeatherServiceImpl implements WeatherService {
         return standardTemperature;
     }
 
-    private int computeDensityAltitude(HashMap<String, Object> weatherComponents) {
+    private double computeDensityAltitude(HashMap<String, Object> weatherComponents) {
         /*
          * this funciton should compute the density alttude for an airport at a given pressure altitude
          * 
@@ -103,16 +103,17 @@ public class WeatherServiceImpl implements WeatherService {
          * 
          * https://www.checkwxapi.com/documentation/station
          * 
-         * using the OAT(outside air temp) and ISA which is the standard tempature at a given altitude. use the helper
+         * using the OAT(outside air temp) and ISA which is the standard temperature at a given altitude. use the helper
          * function to compute this.
          * 
-         * imppelemt the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
+         * Implement the formula DA = Pressure_Altitude + (120 x (OAT – ISA))
          */
+        double alt = Double.parseDouble(weatherComponents.get("elevation").toString());
+        double degF = Double.parseDouble(weatherComponents.get("temperature").toString().split(" ")[0]);
+        double degC = (degF - 32) / 1.8;
+        double isa = calculateStandardTemperature(alt);
 
-        // System.out.println("ALT" + WeatherComponents.get("elevation"));
-        // System.out.println(WeatherComponents.get("temperature"));
-
-        return 0;
+        return alt + (120 * (degC - isa));
     }
 
     /**
