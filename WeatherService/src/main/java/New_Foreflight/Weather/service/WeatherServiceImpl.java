@@ -1,5 +1,7 @@
 package New_Foreflight.Weather.service;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,9 +13,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
+
+    private static Cache<String, AirportWeatherResponse> cache = CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES).build();
 
     @Value("${checkwx.api.url}")
     private String apiUrl;
@@ -23,6 +29,8 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
+        if (getCache(icao) != null)
+            return getCache(icao);
         String endpoint = apiUrl.replace("{station}", icao).replace("{key}", apiKey);
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
@@ -30,8 +38,10 @@ public class WeatherServiceImpl implements WeatherService {
         String rawMetar = parseRawMetarText(apiResponseJson);
         HashMap<String, Object> seperatedComponents = separateMetarComponents(apiResponseJson);
         String flightRules = getFlightConditions(apiResponseJson);
+        AirportWeatherResponse response = new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
 
-        return new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
+        addToCache(icao, response);
+        return response;
     }
 
     @Override
@@ -204,5 +214,13 @@ public class WeatherServiceImpl implements WeatherService {
         JSONObject elevationData = (JSONObject) elevationDataObj;
 
         return elevationData.optString("feet");
+    }
+
+    private static void addToCache(String icao, AirportWeatherResponse response) {
+        cache.put(icao, response);
+    }
+
+    private static AirportWeatherResponse getCache(String icao) {
+        return cache.getIfPresent(icao);
     }
 }
