@@ -205,10 +205,39 @@ public class WeatherServiceImpl implements Weatherservice {
         return humidityData.optString("percent") + " %";
     }
 
+
+    private String getClosestAirport(double lat, double lon, String[]airports){
+
+        //return closest lat and long out of DB our of the list.lookup each in DB for respective coords.
+
+
+
+
+
+        return "";
+    };
+
+
+    @Override
+    public String getWindsAloft(String airportCode, int altitude) {
+        // TODO Auto-generated method stub
+
+        
+
+
+
+        return "";
+    }
+    
+
+
+    /* ******************Other helper functions for navigational tasks.****************************** */
+
     private String parseElevation(Object ElevationDataObj) {
 
         JSONObject elevationData = (JSONObject) ElevationDataObj;
 
         return elevationData.optString("feet");
     }
+
 }
