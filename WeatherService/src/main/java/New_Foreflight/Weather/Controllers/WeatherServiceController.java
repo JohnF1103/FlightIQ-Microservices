@@ -18,17 +18,15 @@ public class WeatherServiceController {
     @Autowired
     Weatherservice weatherservice;
 
-
-
-        @GetMapping(value = "/getAirportInfo")
-        public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
-            try {
-                AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
-                return ResponseEntity.ok(response);
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-            }
+    @GetMapping(value = "/getAirportInfo")
+    public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
+        try {
+            AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+
 
         
         @GetMapping(value = "/getWindsAloft")
@@ -42,5 +40,8 @@ public class WeatherServiceController {
         }
 
 
+
+
+    }
 
 }

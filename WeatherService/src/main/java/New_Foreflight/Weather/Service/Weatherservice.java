@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 public interface Weatherservice {
 
+
      AirportWeatherResponse getAirportWeather(String iaco);
      String parseRawMETARText(String apiResponse);
      HashMap<String, Object> separateMetarComponents(String info);
@@ -13,4 +14,12 @@ public interface Weatherservice {
     String getWindsAloft(String airportCode, int altitude);
 }
 
+    AirportWeatherResponse getAirportWeather(String iaco);
 
+    String parseRawMETARText(String apiResponse);
+
+
+    HashMap<String, Object> separateMetarComponents(String info);
+
+    String getFlightConditions(String apiResponseJSON);
+}
