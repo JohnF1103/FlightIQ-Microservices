@@ -13,4 +13,6 @@ public interface WeatherService {
     public HashMap<String, Object> separateMetarComponents(String info);
 
     public String getFlightConditions(String apiResponseJSON);
+
+    public String getWindsAloft(String airportCode, int altitude);
 }

@@ -81,6 +81,13 @@ public class WeatherServiceImpl implements WeatherService {
         return flightConditions;
     }
 
+    @Override
+    public String getWindsAloft(String airportCode, int altitude) {
+        // TODO Auto-generated method stub
+        return "";
+    }
+    
+
     private double calculateStandardTemperature(double altitude) {
         // Standard temperature at sea level is 15°C
         final double SEA_LEVEL_STANDARD_TEMP = 15.0;
