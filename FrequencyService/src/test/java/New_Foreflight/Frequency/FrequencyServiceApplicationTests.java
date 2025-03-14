@@ -1,4 +1,4 @@
-package New_Foreflight.Weather;
+package New_Foreflight.Frequency;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,18 +12,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import New_Foreflight.Weather.controller.WeatherServiceController;
-import New_Foreflight.Weather.dto.AirportWeatherResponse;
+import New_Foreflight.Frequency.controller.FrequencyServiceController;
+import New_Foreflight.Frequency.dto.AirportFrequencyResponse;
 
 @SpringBootTest
-class WeatherServiceApplicationTests {
+class FrequencyServiceApplicationTests {
 
     @Autowired
-    private WeatherServiceController controller;
+    private FrequencyServiceController controller;
 
     @Test
-    void getAirportWeatherTest() {
-        ResponseEntity<AirportWeatherResponse> response = controller.getAirportWeather("KLAX");
+    void getFrequenciesTest() {
+        ResponseEntity<AirportFrequencyResponse> response = controller.getAirportFrequencies("KJFK");
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
         assertNotNull(response.getBody());
@@ -45,10 +45,8 @@ class WeatherServiceApplicationTests {
             exception.printStackTrace();
         }
         // Output individual JSON fields.
-        System.out.println("Weather Data for KLAX:");
-        System.out.println("METAR Data: " + jsonNode.get("metar_data").asText());
-        System.out.println("METAR Components: " + jsonNode.get("metar_components").toString());
-        System.out.println("Flight Rules: " + jsonNode.get("flight_rules").asText());
+        System.out.println("Frequencies for KJFK:");
+        System.out.println(jsonNode.get("frequencies").toString());
     }
 
     @Test
