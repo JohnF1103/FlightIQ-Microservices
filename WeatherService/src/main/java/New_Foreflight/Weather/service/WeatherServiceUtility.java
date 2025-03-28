@@ -8,9 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.web.client.RestTemplate;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
@@ -19,20 +21,27 @@ import New_Foreflight.Weather.dto.AirportWeatherResponse;
  */
 public class WeatherServiceUtility {
 
-    private static Cache<String, AirportWeatherResponse> cache = CacheBuilder.newBuilder()
+    private static Cache<String, AirportWeatherResponse> weatherCache = CacheBuilder.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES).build();
+    // Cached map of airports with corresponding winds aloft data.
+    // Key is the airport code and value is a list of winds aloft in order of increased altitude.
+    private static Cache<String, String[]> windsAloftData = CacheBuilder.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS).build();
+    // List of altitudes for which winds aloft data is available.
+    private static List<Integer> windsAloftAltitudes = Lists.newArrayList(3000, 6000, 9000, 12000, 18000, 24000, 30000,
+            34000, 39000);
 
     @FunctionalInterface
     protected static interface DataParser<T> {
         T parse(Object data);
     }
 
-    protected static void addToCache(String icao, AirportWeatherResponse response) {
-        cache.put(icao, response);
+    protected static void addToWeatherCache(String icao, AirportWeatherResponse response) {
+        weatherCache.put(icao, response);
     }
 
-    protected static AirportWeatherResponse getCache(String icao) {
-        return cache.getIfPresent(icao);
+    protected static AirportWeatherResponse getWeatherCache(String icao) {
+        return weatherCache.getIfPresent(icao);
     }
 
     protected static double calculateStandardTemperature(double altitude) {
@@ -96,12 +105,14 @@ public class WeatherServiceUtility {
     protected static List<HashMap<String, String>> parseClouds(Object cloudsDataObj) {
         JSONArray cloudsArray = (JSONArray) cloudsDataObj;
         List<HashMap<String, String>> cloudsList = new ArrayList<>();
+        JSONObject cloud;
+        LinkedHashMap<String, String> cloudMap;
+        String skyCode;
 
         for (int i = 0; i < cloudsArray.length(); i++) {
-            JSONObject cloud = cloudsArray.getJSONObject(i);
-            LinkedHashMap<String, String> cloudMap = new LinkedHashMap<>();
-
-            String skyCode = cloud.optString("code", "Unknown");
+            cloud = cloudsArray.getJSONObject(i);
+            cloudMap = new LinkedHashMap<>();
+            skyCode = cloud.optString("code", "Unknown");
 
             cloudMap.put("code", skyCode);
 
@@ -142,5 +153,79 @@ public class WeatherServiceUtility {
         JSONObject elevationData = (JSONObject) elevationDataObj;
 
         return elevationData.optString("feet");
+    }
+
+    private static String getClosestAirportCode(String airportCode) {
+        // TODO
+        return "";
+    }
+
+    private static void fetchWindsAloftData(String windsAloftApiUrl) {
+        RestTemplate restTemplate = new RestTemplate();
+        String response = restTemplate.getForObject(windsAloftApiUrl, String.class);
+
+        // Each key is an airport code, each value is a list of 9 items where
+        // each item is the wind speed at a different altitude
+        // The first item is the wind speed at 3000 feet, the second item is the wind speed at 6000 feet, etc.
+        String[] lines = response.split("\n");
+        String[] windSpeeds;
+        String line, airportCode;
+
+        for (int i = 8; i < lines.length; i++) {
+            line = lines[i];
+            airportCode = "K" + line.substring(0, 3);
+            windSpeeds = new String[9];
+
+            windSpeeds[0] = line.substring(4, 8).trim();
+            windSpeeds[1] = line.substring(9, 16).trim();
+            windSpeeds[2] = line.substring(17, 24).trim();
+            windSpeeds[3] = line.substring(25, 32).trim();
+            windSpeeds[4] = line.substring(33, 40).trim();
+            windSpeeds[5] = line.substring(41, 48).trim();
+            windSpeeds[6] = line.substring(49, 54).trim();
+            windSpeeds[7] = line.substring(56, 61).trim();
+            windSpeeds[8] = line.substring(62, 69).trim();
+
+            for (int j = 0; j < windSpeeds.length; j++)
+                if (windSpeeds[j].isEmpty())
+                    windSpeeds[j] = "N/A";
+            windsAloftData.put(airportCode, windSpeeds);
+        }
+    }
+
+    /**
+     * Returns the winds aloft data for a given airport and altitude.
+     * 
+     * The data is fetched from the winds aloft API which is refreshed every 6 hours.
+     * 
+     * The nearest airport with winds aloft data is returned if the given airport does not have data, and the altitude
+     * is rounded to the nearest 3000 feet.
+     */
+    protected static String getWindsAloftData(String airportCode, int altitude, String windsAloftApiUrl) {
+        // If the cache is empty, fetch the winds aloft data from the API.
+        if (windsAloftData.asMap().isEmpty())
+            fetchWindsAloftData(windsAloftApiUrl);
+
+        // If the airport is not in the list of airports with winds aloft data, get the closest airport with data.
+        // Not yet supported, currently returns an empty string.
+        if (!windsAloftData.asMap().containsKey(airportCode)) {
+            String closestAirport = getClosestAirportCode(airportCode);
+
+            if (closestAirport.isEmpty())
+                return "No winds aloft data available for the given airport or nearest airport.";
+            airportCode = closestAirport;
+        }
+        // Round altitude to the nearest value in the list of altitudes for which winds aloft data is available.
+        int altitudeRounded = windsAloftAltitudes.stream()
+                .min((a, b) -> Integer.compare(Math.abs(a - altitude), Math.abs(b - altitude))).get();
+        int index;
+
+        if (altitudeRounded <= windsAloftAltitudes.get(0))
+            index = 0;
+        else if (altitudeRounded >= windsAloftAltitudes.get(windsAloftAltitudes.size() - 1))
+            index = windsAloftAltitudes.size() - 1;
+        else
+            index = windsAloftAltitudes.indexOf(altitudeRounded);
+        return windsAloftData.getIfPresent(airportCode)[index];
     }
 }

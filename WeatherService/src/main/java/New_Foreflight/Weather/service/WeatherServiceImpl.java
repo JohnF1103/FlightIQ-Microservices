@@ -13,16 +13,19 @@ import java.util.LinkedHashMap;
 public class WeatherServiceImpl implements WeatherService {
 
     @Value("${checkwx.api.url}")
-    private String apiUrl;
+    private String weatherApiUrl;
 
     @Value("${checkwx.api.key}")
-    private String apiKey;
+    private String weatherApiKey;
+
+    @Value("${aviation.weather.api.url}")
+    private String windsAloftApiUrl;
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
-        if (WeatherServiceUtility.getCache(icao) != null)
-            return WeatherServiceUtility.getCache(icao);
-        String endpoint = apiUrl.replace("{station}", icao).replace("{key}", apiKey);
+        if (WeatherServiceUtility.getWeatherCache(icao) != null)
+            return WeatherServiceUtility.getWeatherCache(icao);
+        String endpoint = weatherApiUrl.replace("{station}", icao).replace("{key}", weatherApiKey);
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
 
@@ -31,7 +34,7 @@ public class WeatherServiceImpl implements WeatherService {
         String flightRules = getFlightConditions(apiResponseJson);
         AirportWeatherResponse response = new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
 
-        WeatherServiceUtility.addToCache(icao, response);
+        WeatherServiceUtility.addToWeatherCache(icao, response);
         return response;
     }
 
@@ -80,15 +83,17 @@ public class WeatherServiceImpl implements WeatherService {
      */
     @Override
     public String getFlightConditions(String apiResponseJson) {
-        String flightConditions = new JSONObject(apiResponseJson).getJSONArray("data").getJSONObject(0)
-                .getString("flight_category").toString();
-
-        return flightConditions;
+        return new JSONObject(apiResponseJson).getJSONArray("data").getJSONObject(0).getString("flight_category")
+                .toString();
     }
 
+    /**
+     * Provides the winds aloft data for a given airport and altitude.
+     * 
+     * If a given airport does not have winds aloft data, then the data from the nearest airport is returned.
+     */
     @Override
     public String getWindsAloft(String airportCode, int altitude) {
-        // TODO Auto-generated method stub
-        return "";
+        return WeatherServiceUtility.getWindsAloftData(airportCode, altitude, new String(windsAloftApiUrl));
     }
 }
