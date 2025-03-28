@@ -23,17 +23,17 @@ class WeatherServiceApplicationTests {
 
     @Test
     void getAirportWeatherTest() {
-        ResponseEntity<AirportWeatherResponse> response = controller.getAirportWeather("KLAX");
+        ResponseEntity<AirportWeatherResponse> weatherResponse = controller.getAirportWeather("KLAX");
 
-        assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
+        assertTrue(weatherResponse.getStatusCode().is2xxSuccessful());
+        assertNotNull(weatherResponse.getBody());
 
         // Convert the response body to JSON.
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonString = null;
 
         try {
-            jsonString = objectMapper.writeValueAsString(response.getBody());
+            jsonString = objectMapper.writeValueAsString(weatherResponse.getBody());
         } catch (JsonProcessingException exception) {
             exception.printStackTrace();
         }
@@ -49,6 +49,18 @@ class WeatherServiceApplicationTests {
         System.out.println("METAR Data: " + jsonNode.get("metar_data").asText());
         System.out.println("METAR Components: " + jsonNode.get("metar_components").toString());
         System.out.println("Flight Rules: " + jsonNode.get("flight_rules").asText());
+    }
+
+    @Test
+    void getWindsAloftTest() {
+        ResponseEntity<String> windsAloftResponse = controller.getWindsAloft("KABI", 41345);
+
+        assertTrue(windsAloftResponse.getStatusCode().is2xxSuccessful());
+        assertNotNull(windsAloftResponse.getBody());
+
+        // Output the winds aloft data.
+        System.out.println("Winds Aloft Data for KABI:");
+        System.out.println(windsAloftResponse.getBody());
     }
 
     @Test
