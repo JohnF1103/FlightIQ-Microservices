@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -28,8 +29,9 @@ public class WeatherServiceUtility {
     private static Cache<String, String[]> windsAloftData = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS).build();
     // List of altitudes for which winds aloft data is available.
-    private static List<Integer> windsAloftAltitudes = Lists.newArrayList(3000, 6000, 9000, 12000, 18000, 24000, 30000,
-            34000, 39000);
+    private static List<Integer> windsAloftAltitudes;
+    // List of airports which are valid to report winds aloft data for.
+    private static List<String> windsAloftAirports;
 
     @FunctionalInterface
     protected static interface DataParser<T> {
@@ -155,18 +157,19 @@ public class WeatherServiceUtility {
         return elevationData.optString("feet");
     }
 
-    private static String getClosestAirportCode(String airportCode) {
-        // TODO
-        return "";
+    private static Pair<String, Double> getClosestAirportCode(String airportCode) {
+        // TODO: Implement logic to find the closest airport and its relative distance.
+        return Pair.of("", 0.0);
     }
 
     private static void fetchWindsAloftData(String windsAloftApiUrl) {
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(windsAloftApiUrl, String.class);
 
-        // Each key is an airport code, each value is a list of 9 items where
-        // each item is the wind speed at a different altitude
-        // The first item is the wind speed at 3000 feet, the second item is the wind speed at 6000 feet, etc.
+        if (response == null || response.isEmpty()) {
+            System.err.println("No winds aloft data available.");
+            return;
+        }
         String[] lines = response.split("\n");
         String[] windSpeeds;
         String line, airportCode;
@@ -174,6 +177,9 @@ public class WeatherServiceUtility {
         for (int i = 8; i < lines.length; i++) {
             line = lines[i];
             airportCode = "K" + line.substring(0, 3);
+
+            if (!windsAloftAirports.contains(airportCode))
+                continue;
             windSpeeds = new String[9];
 
             windSpeeds[0] = line.substring(4, 8).trim();
@@ -202,18 +208,41 @@ public class WeatherServiceUtility {
      * is rounded to the nearest 3000 feet.
      */
     protected static String getWindsAloftData(String airportCode, int altitude, String windsAloftApiUrl) {
+        // If the pre-set altitudes list is empty, assign the default values.
+        if (windsAloftAltitudes == null || windsAloftAltitudes.isEmpty())
+            windsAloftAltitudes = Lists.newArrayList(3000, 6000, 9000, 12000, 18000, 24000, 30000, 34000, 39000);
+
+        // If the list of valid airports to report winds aloft data for is empty, assign the default values.
+        if (windsAloftAirports == null || windsAloftAirports.isEmpty())
+            windsAloftAirports = Lists.newArrayList("KELY", "KRNO", "KBNA", "KMSP", "KMKG", "KGFK", "KPHX", "KBGR",
+                    "KSYR", "KOMA", "KCAR", "KBRL", "KWJF", "KLIT", "KROA", "KONL", "KORF", "KLRD", "KABQ", "KBOS",
+                    "KSBA", "KCRW", "KSFO", "KGJT", "KBML", "KAMA", "KICT", "KCGI", "KTYS", "KDEN", "KABI", "KAGC",
+                    "KLBB", "KPIE", "KCAE", "KTRI", "KATL", "KLWS", "KYKM", "KSHV", "KGRB", "KCVG", "KEYW", "KTUS",
+                    "KABR", "KSLN", "KGTF", "KMSY", "KDIK", "KSEA", "KDLH", "KTVC", "KBUF", "KFWA", "KJAX", "KSAT",
+                    "KBIH", "KOKC", "KLAS", "KBAM", "KLCH", "KJAN", "KSPI", "KAST", "KFSD", "KCRP", "KPWM", "KGGW",
+                    "KSPS", "KFSM", "KFOT", "KDSM", "KINK", "KBFF", "KMGM", "KGRI", "KDRT", "KRBL", "KGCK", "KTLH",
+                    "KBHM", "KGEG", "KCOU", "KSLC", "KOTH", "KRDU", "KPUB", "KGAG", "KCLE", "KSGF", "KMCW", "KMEM",
+                    "KJFK", "KGSP", "KCLL", "KLSE", "KPIR", "KBOI", "KLOU", "KROW", "KSTL", "KMKC", "KHSV", "KBDL",
+                    "KMOB", "KSAV", "KGLD", "KEVV", "KFAT", "KFLO", "KPIH", "KSAC", "KRAP", "KBRO", "KDBQ", "KELP",
+                    "KDLN", "KRDM", "KPRC", "KALS", "KCMH", "KONT", "KTCC", "KSAN", "KILM", "KACK", "KMLB", "KEKN",
+                    "KCHS", "KPSX", "KALB", "KLND", "KGPI", "KTUL", "KHOU", "KAXN", "KPDX", "KACY", "KBCE", "KAVP",
+                    "KSIY", "KFMN", "KINL", "KBLH", "KBIL", "KDAL", "KRIC", "KMOT", "KMLS", "KMIA", "KIND", "KJOT",
+                    "KLKV", "KCSG");
+
         // If the cache is empty, fetch the winds aloft data from the API.
         if (windsAloftData.asMap().isEmpty())
             fetchWindsAloftData(windsAloftApiUrl);
+        double closestAirportDistance = 0.00;
 
         // If the airport is not in the list of airports with winds aloft data, get the closest airport with data.
         // Not yet supported, currently returns an empty string.
-        if (!windsAloftData.asMap().containsKey(airportCode)) {
-            String closestAirport = getClosestAirportCode(airportCode);
+        if (!windsAloftAirports.contains(airportCode)) {
+            Pair<String, Double> closestAirport = getClosestAirportCode(airportCode);
 
-            if (closestAirport.isEmpty())
+            if (closestAirport.getLeft().isEmpty())
                 return "No winds aloft data available for the given airport or nearest airport.";
-            airportCode = closestAirport;
+            airportCode = closestAirport.getLeft();
+            closestAirportDistance = Math.round(closestAirport.getRight() * 100.0) / 100.0;
         }
         // Round altitude to the nearest value in the list of altitudes for which winds aloft data is available.
         int altitudeRounded = windsAloftAltitudes.stream()
@@ -226,6 +255,11 @@ public class WeatherServiceUtility {
             index = windsAloftAltitudes.size() - 1;
         else
             index = windsAloftAltitudes.indexOf(altitudeRounded);
-        return windsAloftData.getIfPresent(airportCode)[index];
+        String windsAloftRaw = windsAloftData.getIfPresent(airportCode)[index];
+        // TODO: Parse the windsAloftRaw data to get the direction and speed.
+        int direction = 0, speed = 0;
+
+        // Return the data in form "direction@speed@updated_airport_code@distance_from_orginal_airport_in_miles"
+        return "" + direction + "@" + speed + "@" + airportCode + "@" + closestAirportDistance;
     }
 }
