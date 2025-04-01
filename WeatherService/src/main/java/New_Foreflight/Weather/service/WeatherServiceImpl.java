@@ -1,5 +1,7 @@
 package New_Foreflight.Weather.service;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,9 +13,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
+
+    private static Cache<String, AirportWeatherResponse> cache = CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES).build();
 
     @Value("${checkwx.api.url}")
     private String apiUrl;
@@ -23,6 +29,8 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
+        if (getCache(icao) != null)
+            return getCache(icao);
         String endpoint = apiUrl.replace("{station}", icao).replace("{key}", apiKey);
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
@@ -30,8 +38,10 @@ public class WeatherServiceImpl implements WeatherService {
         String rawMetar = parseRawMetarText(apiResponseJson);
         HashMap<String, Object> seperatedComponents = separateMetarComponents(apiResponseJson);
         String flightRules = getFlightConditions(apiResponseJson);
+        AirportWeatherResponse response = new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
 
-        return new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
+        addToCache(icao, response);
+        return response;
     }
 
     @Override
@@ -46,14 +56,14 @@ public class WeatherServiceImpl implements WeatherService {
         LinkedHashMap<String, Object> metarComponents = new LinkedHashMap<>();
 
         // Add METAR components using reusable methods
-        addComponentIfPresent(result, "wind", metarComponents, this::parseWinds);
-        addComponentIfPresent(result, "visibility", metarComponents, this::parseVisibility);
-        addComponentIfPresent(result, "clouds", metarComponents, this::parseClouds);
-        addComponentIfPresent(result, "temperature", metarComponents, this::parseTemperature);
-        addComponentIfPresent(result, "dewpoint", metarComponents, this::parseDewpoint);
-        addComponentIfPresent(result, "barometer", metarComponents, this::parsePressure);
-        addComponentIfPresent(result, "humidity", metarComponents, this::parseHumidity);
-        addComponentIfPresent(result, "elevation", metarComponents, this::parseElevation);
+        addComponentIfPresent(result, "wind", metarComponents, WeatherServiceImpl::parseWinds);
+        addComponentIfPresent(result, "visibility", metarComponents, WeatherServiceImpl::parseVisibility);
+        addComponentIfPresent(result, "clouds", metarComponents, WeatherServiceImpl::parseClouds);
+        addComponentIfPresent(result, "temperature", metarComponents, WeatherServiceImpl::parseTemperature);
+        addComponentIfPresent(result, "dewpoint", metarComponents, WeatherServiceImpl::parseDewpoint);
+        addComponentIfPresent(result, "barometer", metarComponents, WeatherServiceImpl::parsePressure);
+        addComponentIfPresent(result, "humidity", metarComponents, WeatherServiceImpl::parseHumidity);
+        addComponentIfPresent(result, "elevation", metarComponents, WeatherServiceImpl::parseElevation);
 
         metarComponents.put("density_altitude", computeDensityAltitude(metarComponents));
 
@@ -86,9 +96,8 @@ public class WeatherServiceImpl implements WeatherService {
         // TODO Auto-generated method stub
         return "";
     }
-    
 
-    private double calculateStandardTemperature(double altitude) {
+    private static double calculateStandardTemperature(double altitude) {
         // Standard temperature at sea level is 15°C
         final double SEA_LEVEL_STANDARD_TEMP = 15.0;
         // Temperature decreases by 2°C per 1000 feet
@@ -99,7 +108,7 @@ public class WeatherServiceImpl implements WeatherService {
         return standardTemperature;
     }
 
-    private double computeDensityAltitude(HashMap<String, Object> weatherComponents) {
+    private static double computeDensityAltitude(HashMap<String, Object> weatherComponents) {
         /*
          * this funciton should compute the density alttude for an airport at a given pressure altitude
          * 
@@ -127,7 +136,7 @@ public class WeatherServiceImpl implements WeatherService {
      * Helper method to add a component if it exists in the JSON object.the "handle clouds handle vis etc.
      *
      */
-    private <T> void addComponentIfPresent(JSONObject result, String key, LinkedHashMap<String, Object> map,
+    private static <T> void addComponentIfPresent(JSONObject result, String key, LinkedHashMap<String, Object> map,
             DataParser<T> parser) {
         if (result.has(key) && !result.isNull(key))
             map.put(key, parser.parse(result.get(key)));
@@ -135,12 +144,12 @@ public class WeatherServiceImpl implements WeatherService {
 
     // Define functional interface for reusable parsers
     @FunctionalInterface
-    private interface DataParser<T> {
+    private static interface DataParser<T> {
         T parse(Object data);
     }
 
     // Parsers for METAR components
-    private String parseWinds(Object windDataObj) {
+    private static String parseWinds(Object windDataObj) {
         JSONObject windData = (JSONObject) windDataObj;
         int direction = windData.optInt("degrees", 0);
         int speedKts = windData.optInt("speed_kts", 0);
@@ -150,7 +159,7 @@ public class WeatherServiceImpl implements WeatherService {
                 : String.format("%d at %d kts", direction, speedKts);
     }
 
-    private String parseVisibility(Object visibilityDataObj) {
+    private static String parseVisibility(Object visibilityDataObj) {
         JSONObject visibilityData = (JSONObject) visibilityDataObj;
 
         return visibilityData.optString("miles") + " SM";
@@ -161,7 +170,7 @@ public class WeatherServiceImpl implements WeatherService {
      * conditions are not clear.
      *
      */
-    private List<HashMap<String, String>> parseClouds(Object cloudsDataObj) {
+    private static List<HashMap<String, String>> parseClouds(Object cloudsDataObj) {
         JSONArray cloudsArray = (JSONArray) cloudsDataObj;
         List<HashMap<String, String>> cloudsList = new ArrayList<>();
 
@@ -181,35 +190,43 @@ public class WeatherServiceImpl implements WeatherService {
         return cloudsList;
     }
 
-    private String parseTemperature(Object temperatureDataObj) {
+    private static String parseTemperature(Object temperatureDataObj) {
         JSONObject tempData = (JSONObject) temperatureDataObj;
 
         return String.format("%s degrees F, %s degrees C", tempData.optString("fahrenheit"),
                 tempData.optString("celsius"));
     }
 
-    private String parseDewpoint(Object dewpointDataObj) {
+    private static String parseDewpoint(Object dewpointDataObj) {
         JSONObject dewpointData = (JSONObject) dewpointDataObj;
 
         return String.format("%s degrees F, %s degrees C", dewpointData.optString("fahrenheit"),
                 dewpointData.optString("celsius"));
     }
 
-    private String parsePressure(Object pressureDataObj) {
+    private static String parsePressure(Object pressureDataObj) {
         JSONObject pressureData = (JSONObject) pressureDataObj;
 
         return "hg: " + pressureData.optString("hg");
     }
 
-    private String parseHumidity(Object humidityDataObj) {
+    private static String parseHumidity(Object humidityDataObj) {
         JSONObject humidityData = (JSONObject) humidityDataObj;
 
         return humidityData.optString("percent") + " %";
     }
 
-    private String parseElevation(Object elevationDataObj) {
+    private static String parseElevation(Object elevationDataObj) {
         JSONObject elevationData = (JSONObject) elevationDataObj;
 
         return elevationData.optString("feet");
+    }
+
+    private static void addToCache(String icao, AirportWeatherResponse response) {
+        cache.put(icao, response);
+    }
+
+    private static AirportWeatherResponse getCache(String icao) {
+        return cache.getIfPresent(icao);
     }
 }
