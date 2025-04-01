@@ -41,14 +41,15 @@ class WeatherServiceApplicationTests {
 
         try {
             jsonNode = objectMapper.readTree(jsonString);
+
+            // Output individual JSON fields.
+            System.out.println("Weather Data for KLAX:");
+            System.out.println("METAR Data: " + jsonNode.get("metar_data").asText());
+            System.out.println("METAR Components: " + jsonNode.get("metar_components").toString());
+            System.out.println("Flight Rules: " + jsonNode.get("flight_rules").asText());
         } catch (JsonProcessingException exception) {
             exception.printStackTrace();
         }
-        // Output individual JSON fields.
-        System.out.println("Weather Data for KLAX:");
-        System.out.println("METAR Data: " + jsonNode.get("metar_data").asText());
-        System.out.println("METAR Components: " + jsonNode.get("metar_components").toString());
-        System.out.println("Flight Rules: " + jsonNode.get("flight_rules").asText());
     }
 
     @Test
