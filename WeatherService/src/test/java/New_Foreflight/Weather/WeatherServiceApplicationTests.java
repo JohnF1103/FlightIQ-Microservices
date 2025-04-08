@@ -54,7 +54,8 @@ class WeatherServiceApplicationTests {
 
     @Test
     void getWindsAloftTest() {
-        ResponseEntity<String> windsAloftResponse = controller.getWindsAloft("KABI", 41345);
+        // Test for which winds aloft data is available for the given airport.
+        ResponseEntity<String> windsAloftResponse = controller.getWindsAloft("KABI", 7200);
 
         assertTrue(windsAloftResponse.getStatusCode().is2xxSuccessful());
         assertNotNull(windsAloftResponse.getBody());
@@ -62,6 +63,18 @@ class WeatherServiceApplicationTests {
         // Output the winds aloft data.
         System.out.println("Winds Aloft Data for KABI:");
         System.out.println(windsAloftResponse.getBody());
+
+        // Test for which winds aloft data is not available for the given airport,
+        // so nearest airport is used.
+        windsAloftResponse = controller.getWindsAloft("KLGA", 38560);
+
+        assertTrue(windsAloftResponse.getStatusCode().is2xxSuccessful());
+        assertNotNull(windsAloftResponse.getBody());
+
+        // Output the winds aloft data.
+        System.out.println("Winds Aloft Data for KLGA:");
+        System.out.println(windsAloftResponse.getBody());
+        assertTrue(windsAloftResponse.getBody().contains("KJFK"));
     }
 
     @Test
