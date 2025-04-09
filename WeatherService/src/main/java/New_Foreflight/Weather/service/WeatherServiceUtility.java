@@ -266,7 +266,7 @@ public class WeatherServiceUtility {
                 icao = parts[3].replaceAll("\"", "");
                 lat = Double.parseDouble(parts[5].replaceAll("\"", ""));
                 lon = Double.parseDouble(parts[6].replaceAll("\"", ""));
-                
+
                 if (airports.contains(icao))
                     windsAloftAirports.put(icao, Pair.of(lat, lon));
                 else if (icao.startsWith("K"))
@@ -275,6 +275,50 @@ public class WeatherServiceUtility {
             bufferedReader.close();
         } catch (Exception exception) {
             exception.printStackTrace();
+        }
+    }
+
+    private static Pair<String, String> decodeWindsAloftRaw(String windsAloftRaw) {
+        try {
+            if (windsAloftRaw.equals("9900"))
+                return Pair.of("VARIABLE", "LIGHT");
+            String windCode;
+
+            if (windsAloftRaw.contains("+"))
+                windCode = windsAloftRaw.split("\\+")[0];
+            else if (windsAloftRaw.contains("-"))
+                windCode = windsAloftRaw.split("-")[0];
+            else
+                windCode = windsAloftRaw;
+
+            if (windCode.length() == 4) {
+                int direction = Integer.parseInt(windCode.substring(0, 2)) * 10;
+                int speed = Integer.parseInt(windCode.substring(2));
+
+                return Pair.of(direction + "", speed + "");
+            }
+
+            if (windCode.length() == 6) {
+                int direction = Integer.parseInt(windCode.substring(0, 2)) * 10;
+                int speed = Integer.parseInt(windCode.substring(2, 4));
+
+                if (100 <= speed && speed <= 199) {
+                    if (100 <= direction && direction <= 199) {
+                        direction = direction - 50;
+                        speed = speed - 100;
+                    } else {
+                        direction = direction + 50;
+                        speed = speed + 100;
+                    }
+                }
+
+                if (speed >= 99)
+                    return Pair.of(direction + "", "199 or greater");
+                return Pair.of(direction + "", speed + "");
+            }
+            return Pair.of("N/A", "N/A");
+        } catch (NumberFormatException | StringIndexOutOfBoundsException exception) {
+            return Pair.of("N/A", "N/A");
         }
     }
 
@@ -322,10 +366,10 @@ public class WeatherServiceUtility {
         else
             index = windsAloftAltitudes.indexOf(altitudeRounded);
         String windsAloftRaw = windsAloftData.getIfPresent(airportCode)[index];
-        // TODO: Parse the windsAloftRaw data to get the direction and speed.
-        int direction = 0, speed = 0;
+        Pair<String, String> windData = decodeWindsAloftRaw(windsAloftRaw);
 
-        // Return the data in form "direction@speed@updated_airport_code@distance_from_orginal_airport_in_miles"
-        return "" + direction + "@" + speed + "@" + airportCode + "@" + closestAirportDistance;
+        // Return the data in form "direction@speed@raw@updated_airport_code@distance_from_orginal_airport_in_miles"
+        return "" + windData.getLeft() + "@" + windData.getRight() + "@" + windsAloftRaw + "@" + airportCode + "@"
+                + closestAirportDistance;
     }
 }
