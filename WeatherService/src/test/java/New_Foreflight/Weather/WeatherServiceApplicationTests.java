@@ -75,6 +75,16 @@ class WeatherServiceApplicationTests {
         System.out.println("Winds Aloft Data for KLGA:");
         System.out.println(windsAloftResponse.getBody());
         assertTrue(windsAloftResponse.getBody().contains("KJFK"));
+
+        // Test for which winds aloft data is available for the given latitude and
+        // longitude.
+        windsAloftResponse = controller.getWindsAloftByCoords(40.6, -73.7, 3600);
+
+        assertTrue(windsAloftResponse.getStatusCode().is2xxSuccessful());
+        assertNotNull(windsAloftResponse.getBody());
+
+        System.out.println("Winds Aloft Data for Latitude 40.6 and Longitude -73.7:");
+        System.out.println(windsAloftResponse.getBody());
     }
 
     @Test

@@ -35,4 +35,14 @@ public class WeatherServiceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+    @GetMapping(value = "/getWindsAloftByCoords")
+    public ResponseEntity<String> getWindsAloftByCoords(@RequestParam double latitude, @RequestParam double longitude,
+            @RequestParam int altitude) {
+        try {
+            return ResponseEntity.ok(weatherService.getWindsAloft(latitude, longitude, altitude));
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 }

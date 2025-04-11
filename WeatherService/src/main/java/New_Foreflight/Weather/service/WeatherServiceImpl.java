@@ -96,4 +96,15 @@ public class WeatherServiceImpl implements WeatherService {
     public String getWindsAloft(String airportCode, int altitude) {
         return WeatherServiceUtility.getWindsAloftData(airportCode, altitude, new String(windsAloftApiUrl));
     }
+
+    /**
+     * Provides the winds aloft data for a given latitude, longitude, and altitude.
+     * 
+     * The airport from which the data is sourced is the nearest airport to the given latitude and longitude. This
+     * airport is identified in the response.
+     */
+    @Override
+    public String getWindsAloft(double latitude, double longitude, int altitude) {
+        return WeatherServiceUtility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
+    }
 }
