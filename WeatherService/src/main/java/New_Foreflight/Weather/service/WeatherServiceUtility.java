@@ -10,6 +10,7 @@ import java.io.FileReader;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -28,8 +29,7 @@ public class WeatherServiceUtility {
             .expireAfterWrite(5, TimeUnit.MINUTES).build();
     // Cached map of airports with corresponding winds aloft data.
     // Key is the airport code and value is a list of winds aloft in order of increased altitude.
-    private static Cache<String, String[]> windsAloftData = CacheBuilder.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS).build();
+    private static Cache<String, String[]> windsAloftData = CacheBuilder.newBuilder().build();
     // Map of airports and a pair of latitude and longitude for each airport.
     private static HashMap<String, Pair<Double, Double>> windsAloftAirports;
     // Map of airports for which there is no winds aloft data.
@@ -260,6 +260,14 @@ public class WeatherServiceUtility {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+    }
+
+    /**
+     * Clears the windsAloftData cache at 12:01AM GMT, 6:01AM GMT, 12:01PM GMT, and 6:01PM GMT daily.
+     */
+    @Scheduled(cron = "0 1 0/6 * * ?", zone = "GMT")
+    protected static void clearWindsAloftDataCache() {
+        windsAloftData.invalidateAll();
     }
 
     private static void fetchWindsAloftData(String windsAloftApiUrl) {
