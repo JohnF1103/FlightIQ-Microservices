@@ -15,4 +15,6 @@ public interface WeatherService {
     public String getFlightConditions(String apiResponseJSON);
 
     public String getWindsAloft(String airportCode, int altitude);
+
+    public String getWindsAloft(double latitude, double longitude, int altitude);
 }
