@@ -2,6 +2,7 @@ package New_Foreflight.Weather.service;
 
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -11,6 +12,9 @@ import java.util.LinkedHashMap;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
+
+    @Autowired
+    private WeatherServiceUtility utility;
 
     @Value("${checkwx.api.url}")
     private String weatherApiUrl;
@@ -94,7 +98,7 @@ public class WeatherServiceImpl implements WeatherService {
      */
     @Override
     public String getWindsAloft(String airportCode, int altitude) {
-        return WeatherServiceUtility.getWindsAloftData(airportCode, altitude, new String(windsAloftApiUrl));
+        return utility.getWindsAloftData(airportCode, altitude, new String(windsAloftApiUrl));
     }
 
     /**
@@ -105,6 +109,6 @@ public class WeatherServiceImpl implements WeatherService {
      */
     @Override
     public String getWindsAloft(double latitude, double longitude, int altitude) {
-        return WeatherServiceUtility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
+        return utility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
     }
 }
