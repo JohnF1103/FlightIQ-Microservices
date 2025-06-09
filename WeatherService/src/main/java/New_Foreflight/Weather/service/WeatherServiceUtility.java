@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -18,22 +18,25 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 
+import New_Foreflight.Weather.database.AirportNode;
+import New_Foreflight.Weather.database.AirportRepository;
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 /**
  * Utility class for WeatherService providing helper methods for parsing and caching weather data.
  */
+@Component
 public class WeatherServiceUtility {
+
+    // Neo4j repository for airport data.
+    @Autowired
+    private AirportRepository airportRepository;
 
     private static Cache<String, AirportWeatherResponse> weatherCache = CacheBuilder.newBuilder()
             .expireAfterWrite(5, TimeUnit.MINUTES).build();
     // Cached map of airports with corresponding winds aloft data.
     // Key is the airport code and value is a list of winds aloft in order of increased altitude.
     private static Cache<String, String[]> windsAloftData = CacheBuilder.newBuilder().build();
-    // Map of airports and a pair of latitude and longitude for each airport.
-    private static HashMap<String, Pair<Double, Double>> windsAloftAirports;
-    // Map of airports for which there is no winds aloft data.
-    private static HashMap<String, Pair<Double, Double>> nonWindsAloftAmericanAirports;
     // List of altitudes for which winds aloft data is available.
     private static List<Integer> windsAloftAltitudes;
 
@@ -161,105 +164,84 @@ public class WeatherServiceUtility {
         return elevationData.optString("feet");
     }
 
-    private static double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        // Radius of the Earth in nautical miles.
-        final int EARTH_RADIUS = 3443;
+    private AirportNode getAirportFromIcao(String icaoCode) {
+        AirportNode airport = airportRepository.findByIcao(icaoCode)
+                .orElseThrow(() -> new RuntimeException("Airport not found"));
 
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2) + Math.cos(Math.toRadians(lat1))
-                * Math.cos(Math.toRadians(lat2)) * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        return airport;
+    }
+
+    private boolean isWindsAloftAirport(String icaoCode) {
+        try {
+            return getAirportFromIcao(icaoCode).isWindsAloftAirport();
+        } catch (RuntimeException exception) {
+            return false;
+        }
+    }
+
+    private static double calculateHaversineNM(double lat1, double lon1, double lat2, double lon2) {
+        // Earth radius in nautical miles.
+        final double R = 3440.065;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        // Return the distance in nautical miles.
-        return EARTH_RADIUS * c;
+        return R * c;
     }
 
-    private static Pair<String, Double> getClosestAirport(String airportCode) {
-        Pair<Double, Double> airportCoords = nonWindsAloftAmericanAirports.get(airportCode);
-        double closestDistance = Double.MAX_VALUE;
-        String closestAirport = "";
-        double distance;
-        double lat1 = airportCoords.getLeft();
-        double lon1 = airportCoords.getRight();
-        double lat2, lon2;
+    private Pair<String, Double> getClosestAirport(String airportCode) {
+        AirportNode sourceAirport = getAirportFromIcao(airportCode);
+        double sourceLat = sourceAirport.getLatitude();
+        double sourceLon = sourceAirport.getLongitude();
+        List<AirportNode> windsAloftAirports = new ArrayList<>();
 
-        for (String airport : windsAloftAirports.keySet()) {
-            lat2 = windsAloftAirports.get(airport).getLeft();
-            lon2 = windsAloftAirports.get(airport).getRight();
-            distance = calculateHaversineDistance(lat1, lon1, lat2, lon2);
+        airportRepository.findAll().forEach(airport -> {
+            if (airport.isWindsAloftAirport() && !airport.getIcao().equals(airportCode))
+                windsAloftAirports.add(airport);
+        });
+        AirportNode closest = null;
+        double minDist = Double.MAX_VALUE;
 
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestAirport = airport;
+        for (AirportNode airport : windsAloftAirports) {
+            double distNM = calculateHaversineNM(sourceLat, sourceLon, airport.getLatitude(), airport.getLongitude());
+
+            if (distNM < minDist) {
+                minDist = distNM;
+                closest = airport;
             }
         }
-        return Pair.of(closestAirport, closestDistance);
+
+        if (closest != null)
+            return Pair.of(closest.getIcao(), minDist);
+        else
+            return Pair.of("", Double.MAX_VALUE);
     }
 
-    private static Pair<String, Double> getClosestAirport(double latitude, double longitude) {
-        double closestDistance = Double.MAX_VALUE;
-        String closestAirport = "";
-        double distance;
-        double lat1 = latitude;
-        double lon1 = longitude;
-        double lat2, lon2;
+    private Pair<String, Double> getClosestAirport(double latitude, double longitude) {
+        List<AirportNode> windsAloftAirports = new ArrayList<>();
 
-        for (String airport : windsAloftAirports.keySet()) {
-            lat2 = windsAloftAirports.get(airport).getLeft();
-            lon2 = windsAloftAirports.get(airport).getRight();
-            distance = calculateHaversineDistance(lat1, lon1, lat2, lon2);
+        airportRepository.findAll().forEach(airport -> {
+            if (airport.isWindsAloftAirport())
+                windsAloftAirports.add(airport);
+        });
+        AirportNode closest = null;
+        double minDist = Double.MAX_VALUE;
 
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestAirport = airport;
+        for (AirportNode airport : windsAloftAirports) {
+            double distNM = calculateHaversineNM(latitude, longitude, airport.getLatitude(), airport.getLongitude());
+
+            if (distNM < minDist) {
+                minDist = distNM;
+                closest = airport;
             }
         }
-        return Pair.of(closestAirport, closestDistance);
-    }
 
-    private static void initializeWindsAloftAirports() {
-        List<String> airports = Lists.newArrayList("KELY", "KRNO", "KBNA", "KMSP", "KMKG", "KGFK", "KPHX", "KBGR",
-                "KSYR", "KOMA", "KCAR", "KBRL", "KWJF", "KLIT", "KROA", "KONL", "KORF", "KLRD", "KABQ", "KBOS", "KSBA",
-                "KCRW", "KSFO", "KGJT", "KBML", "KAMA", "KICT", "KCGI", "KTYS", "KDEN", "KABI", "KAGC", "KLBB", "KPIE",
-                "KCAE", "KTRI", "KATL", "KLWS", "KYKM", "KSHV", "KGRB", "KCVG", "KEYW", "KTUS", "KABR", "KSLN", "KGTF",
-                "KMSY", "KDIK", "KSEA", "KDLH", "KTVC", "KBUF", "KFWA", "KJAX", "KSAT", "KBIH", "KOKC", "KLAS", "KBAM",
-                "KLCH", "KJAN", "KSPI", "KAST", "KFSD", "KCRP", "KPWM", "KGGW", "KSPS", "KFSM", "KFOT", "KDSM", "KINK",
-                "KBFF", "KMGM", "KGRI", "KDRT", "KRBL", "KGCK", "KTLH", "KBHM", "KGEG", "KCOU", "KSLC", "KOTH", "KRDU",
-                "KPUB", "KGAG", "KCLE", "KSGF", "KMCW", "KMEM", "KJFK", "KGSP", "KCLL", "KLSE", "KPIR", "KBOI", "KLOU",
-                "KROW", "KSTL", "KMKC", "KHSV", "KBDL", "KMOB", "KSAV", "KGLD", "KEVV", "KFAT", "KFLO", "KPIH", "KSAC",
-                "KRAP", "KBRO", "KDBQ", "KELP", "KDLN", "KRDM", "KPRC", "KALS", "KCMH", "KONT", "KTCC", "KSAN", "KILM",
-                "KACK", "KMLB", "KEKN", "KCHS", "KPSX", "KALB", "KLND", "KGPI", "KTUL", "KHOU", "KAXN", "KPDX", "KACY",
-                "KBCE", "KAVP", "KSIY", "KFMN", "KINL", "KBLH", "KBIL", "KDAL", "KRIC", "KMOT", "KMLS", "KMIA", "KIND",
-                "KJOT", "KLKV", "KCSG");
-        windsAloftAirports = new HashMap<>();
-        nonWindsAloftAmericanAirports = new HashMap<>();
-
-        try {
-            FileReader fileReader = new FileReader("src/main/resources/airport_data.csv");
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            String[] parts = new String[7];
-            String line, icao;
-            double lat, lon;
-
-            // Clear first line.
-            bufferedReader.readLine();
-
-            while ((line = bufferedReader.readLine()) != null) {
-                parts = line.split("\",\"");
-                icao = parts[3].replaceAll("\"", "");
-                lat = Double.parseDouble(parts[5].replaceAll("\"", ""));
-                lon = Double.parseDouble(parts[6].replaceAll("\"", ""));
-
-                if (airports.contains(icao))
-                    windsAloftAirports.put(icao, Pair.of(lat, lon));
-                else if (icao.startsWith("K"))
-                    nonWindsAloftAmericanAirports.put(icao, Pair.of(lat, lon));
-            }
-            bufferedReader.close();
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
+        if (closest != null)
+            return Pair.of(closest.getIcao(), minDist);
+        else
+            return Pair.of("", Double.MAX_VALUE);
     }
 
     /**
@@ -270,7 +252,7 @@ public class WeatherServiceUtility {
         windsAloftData.invalidateAll();
     }
 
-    private static void fetchWindsAloftData(String windsAloftApiUrl) {
+    private void fetchWindsAloftData(String windsAloftApiUrl) {
         RestTemplate restTemplate = new RestTemplate();
         String response = restTemplate.getForObject(windsAloftApiUrl, String.class);
 
@@ -286,7 +268,7 @@ public class WeatherServiceUtility {
             line = lines[i];
             airportCode = "K" + line.substring(0, 3);
 
-            if (!windsAloftAirports.containsKey(airportCode))
+            if (!isWindsAloftAirport(airportCode))
                 continue;
             windSpeeds = new String[9];
 
@@ -307,14 +289,10 @@ public class WeatherServiceUtility {
         }
     }
 
-    private static void initializeWindsAloftData(String windsAloftApiUrl) {
+    private void initializeWindsAloftData(String windsAloftApiUrl) {
         // If the pre-set altitudes list is empty, assign the default values.
         if (windsAloftAltitudes == null || windsAloftAltitudes.isEmpty())
             windsAloftAltitudes = Lists.newArrayList(3000, 6000, 9000, 12000, 18000, 24000, 30000, 34000, 39000);
-
-        // If the list of valid airports to report winds aloft data for is empty, assign the default values.
-        if (windsAloftAirports == null || windsAloftAirports.isEmpty())
-            initializeWindsAloftAirports();
 
         // If the cache is empty, fetch the winds aloft data from the API.
         if (windsAloftData.asMap().isEmpty())
@@ -393,13 +371,12 @@ public class WeatherServiceUtility {
      * The nearest airport with winds aloft data is returned if the given airport does not have data, and the altitude
      * is rounded to the nearest 3000 feet.
      */
-    protected static String getWindsAloftData(String airportCode, int altitude, String windsAloftApiUrl) {
+    protected String getWindsAloftData(String airportCode, int altitude, String windsAloftApiUrl) {
         initializeWindsAloftData(windsAloftApiUrl);
         double closestAirportDistance = 0.00;
 
         // If the airport is not in the list of airports with winds aloft data, get the closest airport with data.
-        // Not yet supported, currently returns an empty string.
-        if (!windsAloftAirports.containsKey(airportCode)) {
+        if (!isWindsAloftAirport(airportCode)) {
             Pair<String, Double> closestAirport = getClosestAirport(airportCode);
 
             if (closestAirport.getLeft().isEmpty())
@@ -410,13 +387,12 @@ public class WeatherServiceUtility {
         return getWindsAloftResponse(airportCode, closestAirportDistance, altitude);
     }
 
-    protected static String getWindsAloftData(double latitude, double longitude, int altitude,
-            String windsAloftApiUrl) {
+    protected String getWindsAloftData(double latitude, double longitude, int altitude, String windsAloftApiUrl) {
         initializeWindsAloftData(windsAloftApiUrl);
-        Pair<String, Double> closestAirportPair = getClosestAirport(latitude, longitude);
-        String closestAirport = closestAirportPair.getLeft();
-        double closestAirportDistance = Math.round(closestAirportPair.getRight() * 100.0) / 100.0;
+        Pair<String, Double> closestAirport = getClosestAirport(latitude, longitude);
+        String closestAirportCode = closestAirport.getLeft();
+        double closestAirportDistance = Math.round(closestAirport.getRight() * 100.0) / 100.0;
 
-        return getWindsAloftResponse(closestAirport, closestAirportDistance, altitude);
+        return getWindsAloftResponse(closestAirportCode, closestAirportDistance, altitude);
     }
 }
