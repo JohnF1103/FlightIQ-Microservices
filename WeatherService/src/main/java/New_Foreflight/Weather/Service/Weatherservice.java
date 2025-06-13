@@ -10,6 +10,7 @@ public interface Weatherservice {
      String parseRawMETARText(String apiResponse);
      HashMap<String, Object> separateMetarComponents(String info);
      String getFlightConditions(HashMap<String, Object> WeatherComponents);
+     String getPirepData(String airportCode, int dist, int time); 
 }
 
 

@@ -1,6 +1,5 @@
 package New_Foreflight.Weather.Controllers;
 
-import New_Foreflight.Weather.DTO.AirportWeatherResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,13 +8,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import New_Foreflight.Weather.DTO.AirportWeatherResponse;
 import New_Foreflight.Weather.Service.Weatherservice;
 
 @RestController
 @RequestMapping("/api/v1")
 public class WeatherServiceController {
 
-    @Autowired
+	@Autowired
     Weatherservice weatherservice;
 
 
@@ -27,6 +27,21 @@ public class WeatherServiceController {
                 return ResponseEntity.ok(response);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            }
+        }
+        
+ 
+        
+        @GetMapping(value = "/getPireps")
+        public ResponseEntity<String> getPireps(
+                @RequestParam String airportCode,
+                @RequestParam int distance,
+                @RequestParam int age) {
+            try {
+                String pireps = weatherservice.getPirepData(airportCode, distance, age);
+                return ResponseEntity.ok(pireps);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no pireps");
             }
         }
 

@@ -171,4 +171,15 @@ public class WeatherServiceImpl implements Weatherservice {
         JSONObject humidityData = (JSONObject) humidityDataObj;
         return humidityData.optString("percent") + " %";
     }
+    
+    public String getPirepData(String airportCode, int distance, int age) {
+        String url = String.format(
+            "https://aviationweather.gov/api/data/pirep?id=%s&distance=%d&age=%d",
+            airportCode, distance, age
+        );
+
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(url, String.class);
+    }
+
 }
