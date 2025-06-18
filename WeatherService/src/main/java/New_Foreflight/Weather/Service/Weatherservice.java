@@ -11,6 +11,8 @@ public interface Weatherservice {
      HashMap<String, Object> separateMetarComponents(String info);
      String getFlightConditions(HashMap<String, Object> WeatherComponents);
      String getPirepData(String airportCode, int dist, int time); 
+     String getairSigmet(); 
+     String getwindTemp(String reigon, String forcast, String level); 
 }
 
 

@@ -182,4 +182,23 @@ public class WeatherServiceImpl implements Weatherservice {
         return restTemplate.getForObject(url, String.class);
     }
 
+    public String getairSigmet() {
+
+    	String url = "https://aviationweather.gov/api/data/airsigmet?";
+  
+
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(url, String.class);
+    }
+
+    public String getwindTemp(String reigon, String forcast, String level) {
+        String url = String.format(
+            "https://aviationweather.gov/api/data/windtemp?region=%s&fcst=%s&level=%s",
+            reigon, forcast, level
+        );
+
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(url, String.class);
+    }
+
 }

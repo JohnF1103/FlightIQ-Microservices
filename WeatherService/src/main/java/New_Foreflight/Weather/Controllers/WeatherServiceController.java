@@ -44,5 +44,25 @@ public class WeatherServiceController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no pireps");
             }
         }
+        
+        @GetMapping(value = "/getwindTemp")
+        public ResponseEntity<String> getwindTemp(@RequestParam String reigon, @RequestParam String forcast, @RequestParam String level) {
+            try {
+                String windTemp = weatherservice.getwindTemp(reigon,forcast,level);
+                return ResponseEntity.ok(windTemp);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no pireps");
+            }
+        }
+        
+        @GetMapping(value = "/getairSigmet")
+        public ResponseEntity<String> getairSigmet() {
+            try {
+                String airSigmet = weatherservice.getairSigmet();
+                return ResponseEntity.ok(airSigmet);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no pireps");
+            }
+        }
 
 }
