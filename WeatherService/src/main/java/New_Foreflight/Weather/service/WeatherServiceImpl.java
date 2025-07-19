@@ -1,14 +1,19 @@
 package New_Foreflight.Weather.service;
 
-import New_Foreflight.Weather.dto.AirportWeatherResponse;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import New_Foreflight.Weather.dto.AirportWeatherResponse;
+import New_Foreflight.Weather.dto.SigmetResponse;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
@@ -24,6 +29,12 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Value("${aviation.weather.api.url}")
     private String windsAloftApiUrl;
+
+    @Value("${sigmet.api.url}")
+    private String sigmetApiUrl;
+
+    @Value("${sigmet.api.ua}")
+    private String sigmetApiHeader;
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
@@ -110,5 +121,16 @@ public class WeatherServiceImpl implements WeatherService {
     @Override
     public String getWindsAloft(double latitude, double longitude, int altitude) {
         return utility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
+    }
+
+    @Override
+    public SigmetResponse getSigmets() {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, sigmetApiHeader);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        return restTemplate.exchange(sigmetApiUrl, HttpMethod.GET, request, SigmetResponse.class).getBody();
     }
 }

@@ -1,6 +1,5 @@
 package New_Foreflight.Weather.controller;
 
-import New_Foreflight.Weather.dto.AirportWeatherResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import New_Foreflight.Weather.dto.AirportWeatherResponse;
+import New_Foreflight.Weather.dto.SigmetResponse;
 import New_Foreflight.Weather.service.WeatherService;
 
 @RestController
@@ -41,6 +42,15 @@ public class WeatherServiceController {
             @RequestParam int altitude) {
         try {
             return ResponseEntity.ok(weatherService.getWindsAloft(latitude, longitude, altitude));
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @GetMapping("/getSigmets")
+    public ResponseEntity<SigmetResponse> getSigmets() {
+        try {
+            return ResponseEntity.ok(weatherService.getSigmets());
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
