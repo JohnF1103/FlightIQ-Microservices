@@ -2,6 +2,7 @@ package New_Foreflight.Weather.service;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +12,20 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 import New_Foreflight.Weather.dto.SigmetResponse;
+import New_Foreflight.Weather.dto.SigmetResponse.SigmetFeature;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
+
+    // Approx bounding box of continental U.S.
+    private static final double US_MIN_LAT = 24.396308;
+    private static final double US_MAX_LAT = 49.384358;
+    private static final double US_MIN_LON = -125.0;
+    private static final double US_MAX_LON = -66.93457;
 
     @Autowired
     private WeatherServiceUtility utility;
@@ -123,8 +132,11 @@ public class WeatherServiceImpl implements WeatherService {
         return utility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
     }
 
+    /**
+     * Provides all the Aviation Sigmet data.
+     */
     @Override
-    public SigmetResponse getSigmets() {
+    public SigmetResponse getSigmets() { // US Only coordinates, null may be convective?
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -132,5 +144,65 @@ public class WeatherServiceImpl implements WeatherService {
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         return restTemplate.exchange(sigmetApiUrl, HttpMethod.GET, request, SigmetResponse.class).getBody();
+    }
+
+    /**
+     * Provides the Aviation Sigmet data, filted by startTime, endTime, and U.S. only.
+     * 
+     * Time is in ISO 8601 format.
+     * year-mo-daThr:mi:sc.milZ
+     * date T time TimeZone
+     * T is the time delimiter
+     * hr:minute:second.milisecond
+     * Z is the TimeZone, Z is UTC
+     * @param startTime date-time | ex: "2025-07-19T03:01:04.324Z"
+     * @param endTime date-time | ex: "2025-07-19T03:01:04.324Z"
+     * 
+     * TODO: Look into null Sigmet phenonmenon values, and if they are convective or if they should be filtered out.
+     */
+    @Override
+    public SigmetResponse getSigmets(String startTime, String endTime) throws RuntimeException {
+        RestTemplate restTemplate = new RestTemplate();
+
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(sigmetApiUrl);
+        uriBuilder.queryParam("start", startTime);
+        uriBuilder.queryParam("end", endTime);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, sigmetApiHeader);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        SigmetResponse sigmetResponse = restTemplate.exchange(
+            uriBuilder.toUriString(), 
+            HttpMethod.GET, 
+            request, 
+            SigmetResponse.class
+        ).getBody();
+
+        if (sigmetResponse == null || sigmetResponse.getFeatures() == null) {
+            System.out.println("Here");
+            throw new RuntimeException("Data not found for provided startTime and endTime.");
+        }
+
+        List<SigmetFeature> filtered = sigmetResponse.getFeatures().stream().filter(this::isInUS).toList();
+        return new SigmetResponse(filtered);
+    }
+
+    private boolean isInUS(SigmetFeature feature) {
+        if (feature.geometry() == null || feature.geometry().coordinates() == null) {
+            return false;
+        }
+
+        for (List<List<Double>> polygon : feature.geometry().coordinates()) {
+            for (List<Double> point : polygon) {
+                double lon = point.get(0); // GeoJSON: [lon, lat]
+                double lat = point.get(1);
+                if (lat >= US_MIN_LAT && lat <= US_MAX_LAT &&
+                    lon >= US_MIN_LON && lon <= US_MAX_LON) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

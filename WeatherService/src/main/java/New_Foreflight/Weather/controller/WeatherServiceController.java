@@ -55,4 +55,13 @@ public class WeatherServiceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+    @GetMapping("/getSigmetsByTime")
+    public ResponseEntity<SigmetResponse> getSigmetsByTime(@RequestParam String startTime, @RequestParam String endTime) {
+        try {
+            return ResponseEntity.ok(weatherService.getSigmets());
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 }

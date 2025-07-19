@@ -20,4 +20,6 @@ public interface WeatherService {
     public String getWindsAloft(double latitude, double longitude, int altitude);
 
     public SigmetResponse getSigmets();
+
+    public SigmetResponse getSigmets(String startTime, String endTime) throws RuntimeException;
 }
