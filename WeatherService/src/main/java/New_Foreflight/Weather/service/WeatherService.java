@@ -21,5 +21,5 @@ public interface WeatherService {
 
     public SigmetResponse getSigmets();
 
-    public SigmetResponse getSigmets(String startTime, String endTime) throws RuntimeException;
+    public SigmetResponse getSigmets(String startTime) throws RuntimeException;
 }

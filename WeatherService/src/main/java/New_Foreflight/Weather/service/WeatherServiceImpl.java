@@ -155,18 +155,16 @@ public class WeatherServiceImpl implements WeatherService {
      * T is the time delimiter
      * hr:minute:second.milisecond
      * Z is the TimeZone, Z is UTC
-     * @param startTime date-time | ex: "2025-07-19T03:01:04.324Z"
-     * @param endTime date-time | ex: "2025-07-19T03:01:04.324Z"
-     * 
-     * TODO: Look into null Sigmet phenonmenon values, and if they are convective or if they should be filtered out.
+     * @param startTime date-time | ex: "2025-07-19T03:01:04Z"
+     * @param endTime date-time | ex: "2025-07-24T03:01:04Z"
      */
     @Override
-    public SigmetResponse getSigmets(String startTime, String endTime) throws RuntimeException {
+    public SigmetResponse getSigmets(String startTime) throws RuntimeException {
         RestTemplate restTemplate = new RestTemplate();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(sigmetApiUrl);
         uriBuilder.queryParam("start", startTime);
-        uriBuilder.queryParam("end", endTime);
+        // uriBuilder.queryParam("end", endTime);
 
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, sigmetApiHeader);
@@ -180,14 +178,16 @@ public class WeatherServiceImpl implements WeatherService {
         ).getBody();
 
         if (sigmetResponse == null || sigmetResponse.getFeatures() == null) {
-            System.out.println("Here");
-            throw new RuntimeException("Data not found for provided startTime and endTime.");
+            return null;
         }
 
         List<SigmetFeature> filtered = sigmetResponse.getFeatures().stream().filter(this::isInUS).toList();
         return new SigmetResponse(filtered);
     }
 
+    /**
+     * Filter for bounding Sigmet data to the US.
+     */
     private boolean isInUS(SigmetFeature feature) {
         if (feature.geometry() == null || feature.geometry().coordinates() == null) {
             return false;
@@ -195,8 +195,8 @@ public class WeatherServiceImpl implements WeatherService {
 
         for (List<List<Double>> polygon : feature.geometry().coordinates()) {
             for (List<Double> point : polygon) {
-                double lon = point.get(0); // GeoJSON: [lon, lat]
-                double lat = point.get(1);
+                double lat = point.get(0); // GeoJSON: [lat, lon]
+                double lon = point.get(1);
                 if (lat >= US_MIN_LAT && lat <= US_MAX_LAT &&
                     lon >= US_MIN_LON && lon <= US_MAX_LON) {
                     return true;
