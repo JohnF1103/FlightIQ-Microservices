@@ -1,16 +1,21 @@
 package New_Foreflight.Weather.Service;
 
-import New_Foreflight.Weather.DTO.AirportWeatherResponse;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import New_Foreflight.Weather.DTO.AirportWeatherResponse;
 
 @Service
 public class WeatherServiceImpl implements Weatherservice {
@@ -20,6 +25,9 @@ public class WeatherServiceImpl implements Weatherservice {
 
     @Value("${checkwx.api.key}")
     private String apiKey;
+    
+    @Value("${aviation.api.base}")
+    private String baseUrl;
 
     @Override
     public AirportWeatherResponse getAirportWeather(String icao) {
@@ -174,8 +182,8 @@ public class WeatherServiceImpl implements Weatherservice {
     
     public String getPirepData(String airportCode, int distance, int age) {
         String url = String.format(
-            "https://aviationweather.gov/api/data/pirep?id=%s&distance=%d&age=%d",
-            airportCode, distance, age
+            "%s/pirep?id=%s&distance=%d&age=%d",
+            baseUrl, airportCode, distance, age
         );
 
         RestTemplate restTemplate = new RestTemplate();
@@ -183,9 +191,7 @@ public class WeatherServiceImpl implements Weatherservice {
     }
 
     public String getairSigmet() {
-
-    	String url = "https://aviationweather.gov/api/data/airsigmet?";
-  
+        String url = String.format("%s/airsigmet?type=SIGMET", baseUrl);
 
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(url, String.class);
@@ -193,12 +199,92 @@ public class WeatherServiceImpl implements Weatherservice {
 
     public String getwindTemp(String reigon, String forcast, String level) {
         String url = String.format(
-            "https://aviationweather.gov/api/data/windtemp?region=%s&fcst=%s&level=%s",
-            reigon, forcast, level
+            "%s/windtemp?region=%s&fcst=%s&level=%s",
+            baseUrl, reigon, forcast, level
         );
 
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(url, String.class);
     }
+    
+    public String getMetar(String airport, int hours) {
+        String url = String.format(
+                "%s/metar?ids=%s&hours=%d", 
+                baseUrl, airport, hours
+            );
+
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(url, String.class);
+    }
+    
+
+    
+    public String getGAirmet(int southLat, int westLon, int northLat, int eastLon
+            ) {
+
+	
+		
+		String zuluTime = Instant.now().atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_INSTANT);
+		System.out.println("Zulu Time: " + zuluTime);
+		
+	
+        String date = LocalDate.parse(zuluTime.substring(0, 10)).toString();
+
+        String sT = date + "T00:00:00Z";
+        String eT = LocalDate.parse(date).plusDays(1) + "T00:00:00Z";
+
+
+        String apiUrl = String.format(
+                "%s/dataserver?requestType=retrieve&dataSource=gairmets&startTime=%s&endTime=%s&format=xml&boundingBox=%d,%d,%d,%d",
+                baseUrl, sT, eT, southLat, westLon, northLat, eastLon
+            );
+        System.out.println(apiUrl);
+        
+		RestTemplate restTemplate = new RestTemplate();
+		String xml = restTemplate.getForObject(apiUrl, String.class);
+		
+		return xml;
+
+	}
+    
+    private double extractCelsius(String formattedString) {
+        if (formattedString == null || !formattedString.contains("degrees C")) {
+            throw new IllegalArgumentException("Celsius value missing");
+        }
+
+        String[] parts = formattedString.split(",");
+        String celsiusPart = parts[1].trim(); 
+        String[] tokens = celsiusPart.split(" ");
+        return Double.parseDouble(tokens[0]); 
+    }
+
+    
+    
+    public String getDewPointSpread(String icao) {
+        String endpoint = apiUrl.replace("{station}", icao) + "?x-api-key=" + apiKey;
+        RestTemplate restTemplate = new RestTemplate();
+        String apiResponseJSON = restTemplate.getForObject(endpoint, String.class);
+
+        HashMap<String, Object> separatedComponents = separateMetarComponents(apiResponseJSON);
+
+        try {
+           
+            String tempString = (String) separatedComponents.get("temperature");
+            String dewString = (String) separatedComponents.get("dewpoint");
+
+           
+            double tempC = extractCelsius(tempString);
+            double dewC = extractCelsius(dewString);
+
+            double spread = tempC - dewC;
+            return String.format("Dew Point Spread: %.1f°C", spread);
+
+        } catch (Exception e) {
+            return "dew point spread N/A " + e.getMessage();
+        }
+    }
+
+
 
 }
