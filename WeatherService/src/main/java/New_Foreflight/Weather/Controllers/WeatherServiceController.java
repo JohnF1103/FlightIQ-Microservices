@@ -18,17 +18,27 @@ public class WeatherServiceController {
 	@Autowired
     Weatherservice weatherservice;
 
+    @GetMapping(value = "/getAirportInfo")
+    public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
+        try {
+            AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
 
-        @GetMapping(value = "/getAirportInfo")
-        public ResponseEntity<AirportWeatherResponse> getAirportInfo(@RequestParam String airportCode) {
+        
+        @GetMapping(value = "/getWindsAloft")
+        public ResponseEntity<String> getWindsAloft(@RequestParam String airportCode, @RequestParam int altitude) {
             try {
-                AirportWeatherResponse response = weatherservice.getAirportWeather(airportCode);
+                String response = weatherservice.getWindsAloft(airportCode, altitude);
                 return ResponseEntity.ok(response);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
             }
         }
+
 
         @GetMapping(value = "/getPireps")
         public ResponseEntity<String> getPireps(
@@ -92,5 +102,11 @@ public class WeatherServiceController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no DewPointSpread");
             }
         }
+
+
+
+
+    }
+
 
 }
