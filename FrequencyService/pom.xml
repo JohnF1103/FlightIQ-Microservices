@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.0</version>
+		<version>3.4.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>New_Foreflight</groupId>
-	<artifactId>Weather</artifactId>
+	<artifactId>Frequency</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>WeatherService</name>
-	<description>WeatherService</description>
+	<name>FrequencyService</name>
+	<description>FrequencyService</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -39,10 +39,6 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-neo4j</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20231013</version>
@@ -62,11 +58,6 @@
 			<artifactId>guava</artifactId>
 			<version>32.0.1-jre</version>
     	</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.12.0</version>
-        </dependency>
 	</dependencies>
 	<build>
 		<plugins>
