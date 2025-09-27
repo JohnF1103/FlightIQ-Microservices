@@ -1,9 +1,8 @@
 package New_Foreflight.Weather.service;
 
-import New_Foreflight.Weather.dto.AirportWeatherResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.HashMap;
+
+import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 public interface WeatherService {
 
@@ -31,5 +30,5 @@ public interface WeatherService {
 
     public String getWindsAloft(double latitude, double longitude, int altitude);
 
-    public JsonNode getWxAirmet(double latitude, double longitude);
+    public String getWxAirmet(double latitude, double longitude);
 }

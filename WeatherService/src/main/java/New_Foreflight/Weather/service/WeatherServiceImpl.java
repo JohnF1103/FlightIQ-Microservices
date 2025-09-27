@@ -1,25 +1,23 @@
 package New_Foreflight.Weather.service;
 
-import New_Foreflight.Weather.dto.AirportWeatherResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import org.springframework.http.HttpHeaders;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 @Service
 public class WeatherServiceImpl implements WeatherService {
@@ -204,26 +202,22 @@ public class WeatherServiceImpl implements WeatherService {
         }
     }
 
-    public JsonNode getWxAirmet(double latitude, double longitude) {
-        //
-        String url = String.format("https://api.checkwx.com/airmet/lat/%f/lon/%f", latitude, longitude);
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-API-Key", weatherApiKey);
+   public String getWxAirmet(double latitude, double longitude) {
+    String url = String.format("https://api.checkwx.com/airmet/point/%f/%f", latitude, longitude);
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
+    RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-API-Key", weatherApiKey); // inject your API key
+    HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Failed to fetch AIRMETs: " + response.getStatusCode());
-        }
+    ResponseEntity<String> response = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            entity,
+            String.class
+    );
 
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readTree(response.getBody());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse AIRMET response", e);
-        }
-    }
+    return response.getBody();
+}
 }
