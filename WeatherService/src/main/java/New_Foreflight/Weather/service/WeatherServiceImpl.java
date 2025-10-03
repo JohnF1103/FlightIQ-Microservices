@@ -202,22 +202,17 @@ public class WeatherServiceImpl implements WeatherService {
         }
     }
 
-   public String getWxAirmet(double latitude, double longitude) {
-    String url = String.format("https://api.checkwx.com/airmet/point/%f/%f", latitude, longitude);
+    public String getWxAirmet(double latitude, double longitude) {
+        String url = String.format("https://api.checkwx.com/airmet/point/%f/%f", latitude, longitude);
 
-    RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("X-API-Key", weatherApiKey); // inject your API key
-    HttpEntity<String> entity = new HttpEntity<>(headers);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-API-Key", weatherApiKey);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-    ResponseEntity<String> response = restTemplate.exchange(
-            url,
-            HttpMethod.GET,
-            entity,
-            String.class
-    );
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
-    return response.getBody();
-}
+        return response.getBody();
+    }
 }
