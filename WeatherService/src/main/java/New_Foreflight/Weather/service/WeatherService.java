@@ -8,6 +8,8 @@ public interface WeatherService {
 
     public AirportWeatherResponse getAirportWeather(String icao);
 
+    public AirportWeatherResponse getNearestAirportWeather(String icao);
+
     public String parseRawMetarText(String apiResponse);
     
     public HashMap<String, Object> separateMetarComponents(String info);

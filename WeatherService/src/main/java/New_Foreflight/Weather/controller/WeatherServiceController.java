@@ -23,7 +23,8 @@ public class WeatherServiceController {
         try {
             return ResponseEntity.ok(weatherService.getAirportWeather(airportCode));
         } catch (Exception exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.ok(weatherService.getNearestAirportWeather(airportCode));
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 

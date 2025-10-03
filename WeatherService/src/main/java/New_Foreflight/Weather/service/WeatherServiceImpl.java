@@ -49,6 +49,14 @@ public class WeatherServiceImpl implements WeatherService {
         return response;
     }
 
+    public AirportWeatherResponse getNearestAirportWeather(String icao) {
+        if (WeatherServiceUtility.getWeatherCache(icao) != null)
+            return WeatherServiceUtility.getWeatherCache(icao);
+        String endpoint = weatherApiUrl.replace("{station}", icao).replace("{key}", weatherApiKey);
+        RestTemplate restTemplate = new RestTemplate();
+        String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
+    }
+
     @Override
     public String parseRawMetarText(String apiResponse) {
         return new JSONObject(apiResponse).getJSONArray("data").getJSONObject(0).getString("raw_text");
@@ -75,6 +83,8 @@ public class WeatherServiceImpl implements WeatherService {
                 WeatherServiceUtility::parseHumidity);
         WeatherServiceUtility.addComponentIfPresent(result, "elevation", metarComponents,
                 WeatherServiceUtility::parseElevation);
+        WeatherServiceUtility.addComponentIfPresent(result, "position", metarComponents,
+                WeatherServiceUtility::parsePositionString);
         metarComponents.put("density_altitude", WeatherServiceUtility.computeDensityAltitude(metarComponents));
 
         return metarComponents;
