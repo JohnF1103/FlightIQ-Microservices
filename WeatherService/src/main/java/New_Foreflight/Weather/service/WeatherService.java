@@ -2,6 +2,7 @@ package New_Foreflight.Weather.service;
 
 import java.util.HashMap;
 
+import New_Foreflight.Weather.dto.AirmetResponse;
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 public interface WeatherService {
@@ -30,5 +31,5 @@ public interface WeatherService {
 
     public String getWindsAloft(double latitude, double longitude, int altitude);
 
-    public String getWxAirmet(double latitude, double longitude);
+    public AirmetResponse getWxAirmet(double latitude, double longitude);
 }

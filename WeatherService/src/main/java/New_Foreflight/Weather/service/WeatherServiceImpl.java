@@ -4,8 +4,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import New_Foreflight.Weather.dto.AirmetResponse;
 import New_Foreflight.Weather.dto.AirportWeatherResponse;
 
 @Service
@@ -202,7 +208,8 @@ public class WeatherServiceImpl implements WeatherService {
         }
     }
 
-    public String getWxAirmet(double latitude, double longitude) {
+    @Override
+    public AirmetResponse getWxAirmet(double latitude, double longitude) {
         String url = String.format("https://api.checkwx.com/airmet/point/%f/%f", latitude, longitude);
 
         RestTemplate restTemplate = new RestTemplate();
@@ -211,8 +218,37 @@ public class WeatherServiceImpl implements WeatherService {
         headers.set("X-API-Key", weatherApiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+       ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        String apiResponseJson = response.getBody();
 
-        return response.getBody();
+        // Parse the JSON response
+        Integer results = parseResults(apiResponseJson);
+        List<HashMap<String, Object>> airmetData = parseAirmetData(apiResponseJson);
+        
+        AirmetResponse airmetResponse = new AirmetResponse(results, airmetData);
+        return airmetResponse;
     }
+
+    private Integer parseResults(String apiResponse) {
+        return new JSONObject(apiResponse).getInt("results");
+    }
+
+private List<HashMap<String, Object>> parseAirmetData(String json) {
+    try {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+        JsonNode dataNode = root.get("data");
+        
+        List<HashMap<String, Object>> airmetList = new ArrayList<>();
+        if (dataNode.isArray()) {
+            for (JsonNode node : dataNode) {
+                HashMap<String, Object> airmet = mapper.convertValue(node, HashMap.class);
+                airmetList.add(airmet);
+            }
+        }
+        return airmetList;
+    } catch (Exception e) {
+        return new ArrayList<>();
+    }
+}
 }
