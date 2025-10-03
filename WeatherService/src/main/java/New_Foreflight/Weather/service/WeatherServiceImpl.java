@@ -53,8 +53,20 @@ public class WeatherServiceImpl implements WeatherService {
         if (WeatherServiceUtility.getWeatherCache(icao) != null)
             return WeatherServiceUtility.getWeatherCache(icao);
         String endpoint = weatherApiUrl.replace("{station}", icao).replace("{key}", weatherApiKey);
+        endpoint = endpoint.substring(0, endpoint.indexOf("/decoded")) + "/nearest"
+                + endpoint.substring(endpoint.indexOf("/decoded"));
+        // add boolean variable to original functino stating nearest version or regular
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
+
+        String rawMetar = parseRawMetarText(apiResponseJson);
+        HashMap<String, Object> seperatedComponents = separateMetarComponents(apiResponseJson);
+        String flightRules = getFlightConditions(apiResponseJson);
+        AirportWeatherResponse response = new AirportWeatherResponse(rawMetar, seperatedComponents, flightRules);
+
+        WeatherServiceUtility.addToWeatherCache(icao, response);
+        return response;
+
     }
 
     @Override

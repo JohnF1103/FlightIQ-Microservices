@@ -150,7 +150,7 @@ public class WeatherServiceUtility {
         JSONObject pSONObject = (JSONObject) positionObject;
         String orientation = pSONObject.getJSONObject("orientation").optString("from");
         String distance = pSONObject.getJSONObject("distance").optString("miles");
-        return orientation + "--" + distance;
+        return distance + " miles " + orientation;
     }
 
     protected static String parsePressure(Object pressureDataObj) {
