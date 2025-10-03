@@ -146,6 +146,13 @@ public class WeatherServiceUtility {
                 dewpointData.optString("celsius"));
     }
 
+    protected static String parsePositionString(Object positionObject) {
+        JSONObject pSONObject = (JSONObject) positionObject;
+        String orientation = pSONObject.getJSONObject("orientation").optString("from");
+        String distance = pSONObject.getJSONObject("distance").optString("miles");
+        return orientation + "--" + distance;
+    }
+
     protected static String parsePressure(Object pressureDataObj) {
         JSONObject pressureData = (JSONObject) pressureDataObj;
 
