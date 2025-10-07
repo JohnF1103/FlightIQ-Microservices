@@ -9,7 +9,7 @@ public interface WeatherService {
     public AirportWeatherResponse getAirportWeather(String icao);
 
     public String parseRawMetarText(String apiResponse);
-    
+
     public HashMap<String, Object> separateMetarComponents(String info);
 
     public String getFlightConditions(String apiResponseJson);
