@@ -21,10 +21,9 @@ public class WeatherServiceController {
     @GetMapping(value = "/getAirportWeather")
     public ResponseEntity<AirportWeatherResponse> getAirportWeather(@RequestParam String airportCode) {
         try {
-            return ResponseEntity.ok(weatherService.getAirportWeather(airportCode));
+            return ResponseEntity.ok(weatherService.getAirportWeather(airportCode, true));
         } catch (Exception exception) {
-            return ResponseEntity.ok(weatherService.getNearestAirportWeather(airportCode));
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.ok(weatherService.getAirportWeather(airportCode, false));
         }
     }
 

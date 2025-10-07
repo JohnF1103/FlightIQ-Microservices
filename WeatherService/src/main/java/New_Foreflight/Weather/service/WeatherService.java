@@ -6,9 +6,7 @@ import java.util.HashMap;
 
 public interface WeatherService {
 
-    public AirportWeatherResponse getAirportWeather(String icao);
-
-    public AirportWeatherResponse getNearestAirportWeather(String icao);
+    public AirportWeatherResponse getAirportWeather(String icao, Boolean b);
 
     public String parseRawMetarText(String apiResponse);
     
