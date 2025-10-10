@@ -24,9 +24,6 @@ public class WeatherServiceImpl implements WeatherService {
     @Value("${checkwx.api.url}")
     private String weatherApiUrl;
 
-    @Value("${checkwx.api.taf.url}")
-    private String tafUrl;
-
     @Value("${checkwx.api.key}")
     private String weatherApiKey;
 
@@ -202,9 +199,9 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     public String getTAF(String icao) {
-        String endpoint = tafUrl.replace("{station}", icao).replace("{key}", weatherApiKey);
+        String endpoint = weatherApiUrl.substring(0, weatherApiUrl.indexOf("metar")).concat("taf/{station}/nearest/decoded?x-api-key={key}").replace("{station}", icao).replace("{key}", weatherApiKey);
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
-        return apiResponseJson;// To be parsed later
+        return apiResponseJson;
     }
 }
