@@ -14,7 +14,7 @@ public interface WeatherService {
 
     public String getFlightConditions(String apiResponseJson);
 
-    public String getPirepData(String airportCode, int dist, int time);
+    public String getPirepData(String icao, int dist, int time);
 
     public String getAirSigmet();
 

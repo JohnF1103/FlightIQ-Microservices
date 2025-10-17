@@ -120,9 +120,11 @@ public class WeatherServiceImpl implements WeatherService {
         return utility.getWindsAloftData(latitude, longitude, altitude, new String(windsAloftApiUrl));
     }
 
-    public String getPirepData(String airportCode, int distance, int age) {
-        String url = String.format("%s/pirep?id=%s&distance=%d&age=%d", aviationWeatherUrl, airportCode, distance, age);
+    public String getPirepData(String icao, int distance, int age) {
 
+        String baseApiUrl = aviationWeatherUrl.replaceFirst("(?i)/api/data(/.*)?(\\?.*)?$", "/api/data");
+        String url = String.format("%s/pirep?id=%s&distance=%d&age=%d&format=decoded", baseApiUrl, icao, distance, age);
+        System.out.println("url " + url);
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(url, String.class);
     }
@@ -200,6 +202,7 @@ public class WeatherServiceImpl implements WeatherService {
 
     public String getTAF(String icao) {
         String endpoint = weatherApiUrl.substring(0, weatherApiUrl.indexOf("metar")).concat("taf/{station}/nearest/decoded?x-api-key={key}").replace("{station}", icao).replace("{key}", weatherApiKey);
+
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
         return apiResponseJson;
