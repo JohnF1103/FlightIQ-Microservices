@@ -47,59 +47,57 @@ public class WeatherServiceController {
     }
 
     @GetMapping(value = "/getPireps")
-    public ResponseEntity<String> getPireps(
-            @RequestParam String icao,
-            @RequestParam int distance,
+    public ResponseEntity<String> getPireps(@RequestParam String icao, @RequestParam int distance,
             @RequestParam int age) {
         try {
             String pireps = weatherService.getPirepData(icao, distance, age);
-            
+
             return ResponseEntity.ok(pireps);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no pireps");
         }
     }
-    
+
     @GetMapping(value = "/getWindTemp")
-    public ResponseEntity<String> getWindTemp(@RequestParam String region, @RequestParam String forcast, @RequestParam String level) {
+    public ResponseEntity<String> getWindTemp(@RequestParam String region, @RequestParam String forcast,
+            @RequestParam String level) {
         try {
-            String windTemp = weatherService.getWindTemp(region,forcast,level);
-            
+            String windTemp = weatherService.getWindTemp(region, forcast, level);
+
             return ResponseEntity.ok(windTemp);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no wind temp");
         }
     }
-    
+
     @GetMapping(value = "/getAirSigmet")
     public ResponseEntity<String> getAirSigmet() {
         try {
             String airSigmet = weatherService.getAirSigmet();
-            
+
             return ResponseEntity.ok(airSigmet);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no air sigmet");
         }
     }
-    
- 
-    
+
     @GetMapping(value = "/getGAirmet")
-    public ResponseEntity<String> getGAirmet(@RequestParam int southLat,@RequestParam int westLon,@RequestParam int northLat,@RequestParam int eastLon) {
+    public ResponseEntity<String> getGAirmet(@RequestParam int southLat, @RequestParam int westLon,
+            @RequestParam int northLat, @RequestParam int eastLon) {
         try {
-            String GAirmet = weatherService.getGAirmet(southLat, westLon,northLat,eastLon);
-            
+            String GAirmet = weatherService.getGAirmet(southLat, westLon, northLat, eastLon);
+
             return ResponseEntity.ok(GAirmet);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no GAirmet");
         }
     }
-    
+
     @GetMapping(value = "/getDewPointSpread")
     public ResponseEntity<String> getDewPointSpread(@RequestParam String icao) {
         try {
             String dewPointSpread = weatherService.getDewPointSpread(icao);
-            
+
             return ResponseEntity.ok(dewPointSpread);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("no DewPointSpread");

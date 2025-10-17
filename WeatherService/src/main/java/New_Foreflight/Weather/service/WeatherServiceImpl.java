@@ -130,8 +130,11 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     public String getAirSigmet() {
-        String url = String.format("%s/airsigmet?type=SIGMET", aviationWeatherUrl);
 
+        String baseApiUrl = aviationWeatherUrl.replaceFirst("(?i)/api/data(/.*)?(\\?.*)?$", "/api/data");
+        String url = String.format("%s/airsigmet?format=json&type=sigmet", baseApiUrl);
+
+        System.out.println("url " + url);
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(url, String.class);
     }
@@ -201,7 +204,9 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     public String getTAF(String icao) {
-        String endpoint = weatherApiUrl.substring(0, weatherApiUrl.indexOf("metar")).concat("taf/{station}/nearest/decoded?x-api-key={key}").replace("{station}", icao).replace("{key}", weatherApiKey);
+        String endpoint = weatherApiUrl.substring(0, weatherApiUrl.indexOf("metar"))
+                .concat("taf/{station}/nearest/decoded?x-api-key={key}").replace("{station}", icao)
+                .replace("{key}", weatherApiKey);
 
         RestTemplate restTemplate = new RestTemplate();
         String apiResponseJson = restTemplate.getForObject(endpoint, String.class);
