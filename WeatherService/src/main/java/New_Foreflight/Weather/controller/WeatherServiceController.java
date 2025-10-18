@@ -116,8 +116,8 @@ public class WeatherServiceController {
         }
     }
 
-    @GetMapping(value = "/getAirmetByCoords")
-    public ResponseEntity<AirmetResponse> getAirmetByCoords(@RequestParam double latitude, @RequestParam double longitude) {
+    @GetMapping(value = "/getWxAirmet")
+    public ResponseEntity<AirmetResponse> getWxAirmet(@RequestParam double latitude, @RequestParam double longitude) {
         try {
             AirmetResponse airmet = weatherService.getWxAirmet(latitude, longitude);
             return ResponseEntity.ok(airmet);
